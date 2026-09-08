@@ -68,9 +68,5 @@ say "MCP servers (user scope, stored in ~/.claude.json)"
 claude mcp add -s user --transport http context7 https://mcp.context7.com/mcp 2>/dev/null || true
 claude mcp add -s user --transport http mobbin   https://api.mobbin.com/mcp   2>/dev/null || true
 
-say "Optional (not installed by this script)"
-have sonar || echo "  sonar CLI: hooks/sonar-secrets is a no-op without it."
-[ -e "$HOME/.orca" ] || echo "  Orca: settings.json hooks call ~/.orca/agent-hooks/*.sh and are a no-op without it. https://github.com/stablyai/orca"
-
 say "Done. Dangling skill symlinks (expected: elixir, a local project link):"
 find "$HOME/.claude/skills" -maxdepth 1 -type l ! -exec test -e {} \; -print

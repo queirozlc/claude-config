@@ -25,6 +25,10 @@
 .claude/skills/elixir
 .claude/skills/dexcare-aws
 .claude/skills/vpn
+.claude/skills/orca-cli
+.claude/skills/orca-linear
+.claude/skills/orca-team
+.claude/skills/orchestration
 
 # ~/.agents
 !.agents/
@@ -34,6 +38,9 @@
 .agents/skills/impeccable
 .agents/skills/revenue-centric-design
 .agents/skills/dexcare-aws
+.agents/skills/orca-cli
+.agents/skills/orca-linear
+.agents/skills/orchestration
 !.agents/ship/
 .agents/ship/*
 !.agents/ship/ledger-stop.py

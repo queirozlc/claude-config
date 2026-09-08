@@ -28,7 +28,7 @@ sh ~/.claude/install.sh
 | `.claude/skills/` | Skills. Most are symlinks into `~/.agents/skills` |
 | `.claude/agents/` | Custom subagents |
 | `.claude/output-styles/` | Output styles |
-| `.claude/hooks/` | Hook scripts referenced from `settings.json` |
+| `.claude/hooks/` | Hook scripts referenced from `settings.json`. `no-bash-file-edits.sh` blocks file edits made through Bash so the agent uses Read, Edit and Write |
 | `.agents/skills/` | Skill content shared by all agents (Claude Code, Codex, Cursor) |
 | `.agents/ship/ledger-stop.py` | Stop hook for the ship workflow |
 | `.agents/ship/state/` | Only `.gitkeep`. Ship state is never tracked |
@@ -47,13 +47,6 @@ Installed by `install.sh`:
 | paper-desktop | Plugin `paper-desktop@paper` | https://github.com/paper-design/agent-plugins |
 | atlassian, typescript-lsp | Plugins from `claude-plugins-official` | https://github.com/anthropics/claude-plugins-official |
 | context7, mobbin | HTTP MCP servers (stored in `~/.claude.json`, not in this repo) | https://mcp.context7.com/mcp, https://api.mobbin.com/mcp |
-
-Optional, detected only:
-
-| Tool | Used by |
-|---|---|
-| sonar CLI | `.claude/hooks/sonar-secrets` (exits 0 when absent) |
-| Orca | `~/.orca/agent-hooks/*` hooks in `settings.json` (no-op when absent) |
 
 ## Notes
 
