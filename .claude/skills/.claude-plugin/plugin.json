@@ -1,0 +1,5 @@
+{
+  "name": "local",
+  "description": "Local user-defined skills",
+  "skills": "./"
+}

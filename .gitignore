@@ -1,0 +1,49 @@
+# Whitelist. Repo root is $HOME. Everything is ignored unless listed below.
+# Never tracked: sessions, transcripts, memories, history, caches, credentials, backups, ship state.
+*
+!.gitignore
+
+# ~/.claude
+!.claude/
+.claude/*
+!.claude/README.md
+!.claude/PROMPT.md
+!.claude/install.sh
+!.claude/CLAUDE.md
+!.claude/settings.json
+!.claude/statusline.sh
+!.claude/agents/
+!.claude/agents/**
+!.claude/hooks/
+!.claude/hooks/**
+!.claude/output-styles/
+!.claude/output-styles/**
+!.claude/rules/
+!.claude/rules/**
+!.claude/skills/
+!.claude/skills/**
+.claude/skills/elixir
+.claude/skills/dexcare-aws
+.claude/skills/vpn
+
+# ~/.agents
+!.agents/
+.agents/*
+!.agents/skills/
+!.agents/skills/**
+.agents/skills/impeccable
+.agents/skills/revenue-centric-design
+.agents/skills/dexcare-aws
+!.agents/ship/
+.agents/ship/*
+!.agents/ship/ledger-stop.py
+!.agents/ship/state/
+.agents/ship/state/*
+!.agents/ship/state/.gitkeep
+!.agents/ship/state/_archive/
+.agents/ship/state/_archive/*
+!.agents/ship/state/_archive/.gitkeep
+
+.DS_Store
+# Added by code-review-graph
+.code-review-graph/

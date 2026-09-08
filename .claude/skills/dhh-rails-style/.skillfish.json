@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "dhh-rails-style",
+  "owner": "everyinc",
+  "repo": "compound-engineering-plugin",
+  "path": "plugins/compound-engineering/skills/dhh-rails-style",
+  "branch": "main",
+  "sha": "645e2cd3aa3911249342143d6bc4f33eaa292f4a",
+  "source": "manual"
+}
