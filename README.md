@@ -6,7 +6,7 @@ This file is not loaded into Claude sessions. Only `CLAUDE.md`, `rules/`, `skill
 
 ## Install on a new machine
 
-Using an agent: paste `PROMPT.md` into it. By hand:
+Using an agent: paste `~/PROMPT.md` into it. By hand:
 
 ```sh
 cd ~

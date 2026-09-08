@@ -2,12 +2,12 @@
 # Never tracked: sessions, transcripts, memories, history, caches, credentials, backups, ship state.
 *
 !.gitignore
+!README.md
+!PROMPT.md
 
 # ~/.claude
 !.claude/
 .claude/*
-!.claude/README.md
-!.claude/PROMPT.md
 !.claude/install.sh
 !.claude/CLAUDE.md
 !.claude/settings.json
