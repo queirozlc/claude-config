@@ -46,6 +46,7 @@ Installed by `install.sh`:
 | ponytail | Plugin `ponytail@ponytail` | https://github.com/DietrichGebert/ponytail |
 | paper-desktop | Plugin `paper-desktop@paper` | https://github.com/paper-design/agent-plugins |
 | atlassian, typescript-lsp | Plugins from `claude-plugins-official` | https://github.com/anthropics/claude-plugins-official |
+| maestri | The `maestri-*` skills. `install.sh` exports `MAESTRI_CLI` and adds the CLI to `PATH` in your shell rc when `/Applications/Maestri.app` exists (macOS only) | Maestri desktop app |
 | context7, mobbin | HTTP MCP servers (stored in `~/.claude.json`, not in this repo) | https://mcp.context7.com/mcp, https://api.mobbin.com/mcp |
 
 ## Notes

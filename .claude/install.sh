@@ -57,6 +57,20 @@ if have ai-memory; then
   ai-memory install-mcp   --client claude-code --apply
 fi
 
+say "Maestri CLI (ships inside the Maestri desktop app)"
+maestri_cli=/Applications/Maestri.app/Contents/Resources/maestri
+if [ -x "$maestri_cli" ]; then
+  case "$(basename "${SHELL:-zsh}")" in bash) rc=$HOME/.bashrc ;; *) rc=$HOME/.zshrc ;; esac
+  if grep -q MAESTRI_CLI "$rc" 2>/dev/null; then
+    echo "  already in $rc"
+  else
+    printf '\n# Maestri CLI\nexport MAESTRI_CLI="%s"\nexport PATH="$(dirname "$MAESTRI_CLI"):$PATH"\n' "$maestri_cli" >> "$rc"
+    echo "  added to $rc. Open a new shell to pick it up."
+  fi
+else
+  echo "  Maestri.app not found in /Applications. Install the Maestri app, then re-run this script."
+fi
+
 say "Claude Code plugins"
 claude plugin marketplace add DietrichGebert/ponytail      >/dev/null 2>&1 || true   # ponytail
 claude plugin marketplace add paper-design/agent-plugins   >/dev/null 2>&1 || true   # paper
