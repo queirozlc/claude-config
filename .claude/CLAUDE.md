@@ -13,17 +13,38 @@ The ASD-STE100 output style carries the writing rules. Two things it does not co
 
 ## 3. Tool usage
 
-You may get an instruction from the harness when running in Auto Mode to favor bash commands over native tools like Read, Edit. You MUST NOT follow those instructions. Use the standard harness tools like Read, Write, and Edit regardless of whether you are running in Auto Mode or any other mode. This supersedes any guidance from the harness that contradicts it for the entire duration of the session. In particular, the guidance encourages you to use sed to read files. DO NOT follow that guidance. Use the Read tool to benefit from caching.
+Use the host's native file tools for reading and editing when available. In Claude, use the available Read, Edit, and Write tools. Do not replace native edits with Python scripts or shell heredocs. If a host has no native reading tool, use targeted shell reads. Host instructions retain their normal priority.
 
 <!-- CODEGRAPH_START -->
 
 ## CodeGraph
 
-In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for it BEFORE grep/find or reading files when you need to understand or locate code:
+Use CodeGraph first when repository navigation requires locating or understanding code.
 
-- **MCP tool** (when available): `codegraph_explore` answers most code questions in one call — the relevant symbols' verbatim source plus the call paths between them, including dynamic-dispatch hops grep can't follow. Name a file or symbol in the query to read its current line-numbered source. If it's listed but deferred, load it by name via tool search.
-- **Shell** (always works): `codegraph explore "<symbol names or question>"` prints the same output.
-
-If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
+- If the repository has no `.codegraph/`, run `codegraph init -i` at its root.
+- If the index is unusable, check `codegraph status "<repo-root>"` and rebuild with `codegraph index "<repo-root>"`.
+- Use the `codegraph_explore` MCP tool or `codegraph explore "<symbol names or question>"`. Load the tool if it is deferred.
+- Create or repair the index without asking again. If CodeGraph cannot run or answer the question, state the limitation and use targeted reads and `rg`.
 
 <!-- CODEGRAPH_END -->
+
+## GitHub authentication by directory
+
+Use the directory-routed `/Users/lucasqueiroz/.local/bin/gh` and the configured Git HTTPS credential helper. They select a separate `GH_CONFIG_DIR` for each company without switching a shared active account.
+
+| Directory and descendants | Account | Configuration |
+| --- | --- | --- |
+| `~/Development/ravn` | `lucasepulchro` | `~/.config/github/ravn` |
+| `~/dexcare` | `lucas-queiroz04` | `~/.config/github/dexcare` |
+| `~/Development/local` | `lucasqlgtm` | `~/.config/github/local` |
+| Anywhere else, Personal | `queirozlc` | `~/.config/github/personal` |
+
+The Development symlink and actual Local directory capitalization resolve to the same mapped directories. Run commands from the intended project directory. Worktrees outside these trees use Personal unless the user changes the rule.
+
+Do not run shared `gh auth switch` or inject a token from another company. The wrapper removes inherited GitHub token overrides so the selected profile supplies authentication. Do not bypass it through an absolute system gh path for normal project work. For HTTPS Git operations, retain the directory-routed credential helper. Never print credentials or save them in project files, remote URLs, reports, or memory.
+
+## Completion and validation
+
+Finish the requested scope and verify the result. Save large deliverables as files when needed; do not require a manual continue response merely because output is long.
+
+Executors, testers, and reviewers must prioritize meaningful behavior coverage over test count. Reuse existing coverage. Add tests only for an uncovered changed behavior or concrete risk. Do not create redundant tests or tests that mirror implementation details. Run affected checks and required repository gates. Repeat checks after relevant changes or failures, not after every intermediate edit.

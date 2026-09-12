@@ -35,9 +35,12 @@ This is `/ship` for job applications. The mapping:
 
 **Hard requirements — abort with a clear message if missing:**
 
-1. The `maestri` CLI (or `$MAESTRI_CLI`) on PATH. Always load `/maestri`. A
-   hunt does not run solo; without the canvas, tell the user to open a Maestro
-   terminal in the right workspace.
+1. The `maestri` CLI (or `$MAESTRI_CLI`) and its canvas. Load the Maestri skill
+   if the host provides it. Otherwise use the installed CLI's help and available
+   guide command for version-matched instructions; do not invent CLI commands.
+   A hunt does not run solo. If the CLI or canvas is unavailable, report the
+   missing dependency and ask the user to open a Maestro terminal in the right
+   workspace. Preserve the ledgers and candidate evidence while blocked.
 2. `~/career/ATS-KNOWLEDGE.md`, `~/career/RUBRIC.md` and `~/career/CV-SPEC.md`.
    They are the ground truth for every seat. If they are missing, stop and say
    so; do not improvise a replacement.

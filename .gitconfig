@@ -1,0 +1,41 @@
+[init]
+defaultBranch = main
+[user]
+name = caslu
+email = sepulchrolucas@gmail.com
+	signingkey = /Users/lucasqueiroz/.ssh/id_ed25519_signing
+[core]
+autocrlf = input
+editor = nvim
+	excludesfile = /Users/lucasqueiroz/.gitignore_global
+	hooksPath = /Users/lucasqueiroz/.git-hooks
+[advice]
+ignoredHook = true
+[push]
+autoSetupRemote = true
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[safe]
+	directory = *
+[credential "https://github.com"]
+	helper = ""
+	helper = !/Users/lucasqueiroz/.config/github/credential
+[credential "https://gist.github.com"]
+	helper = ""
+	helper = !/Users/lucasqueiroz/.config/github/credential
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
+[gpg "ssh"]
+	allowedSignersFile = /Users/lucasqueiroz/.ssh/allowed_signers
+
+[includeIf "gitdir:~/Development.noindex/ravn/"]
+	path = ~/.gitconfig-ravn
+[includeIf "gitdir:~/dexcare/"]
+	path = ~/.gitconfig-dexcare
+[includeIf "gitdir:~/Development.noindex/Local/"]
+	path = ~/.gitconfig-local

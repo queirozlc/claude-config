@@ -17,9 +17,7 @@ now (see [Cycle state ledger](state.md)).
 
 ### 2. Context pass (you, the Maestro)
 
-Explore with CodeGraph when the repo has a `.codegraph/` index
-(`codegraph explore "..."` or the MCP tool) before any grep/find/Read;
-otherwise explore conventionally. Produce a short context brief: what the
+Use CodeGraph first when repository navigation needs it. Create or repair the index according to the global instructions. If CodeGraph cannot run or answer the question, use targeted reads and `rg`. Produce a short context brief: what the
 ticket asks, which files/symbols it touches, relevant constraints from the
 project's AGENTS.md/CLAUDE.md, and prior decisions (check ai-memory if the
 ticket references past work). This brief travels with every prompt you send.
@@ -30,7 +28,7 @@ ticket references past work). This brief travels with every prompt you send.
   straight to the Executor. Go to step 4.
 - **Frontend screen/flow planning** (a web or mobile ticket that needs a
   screen designed or reshaped, not just implemented): send it to the Design
-  planner seat, not the Planner and not `/grill-me`. The Design planner
+  planner seat. The Design planner
   reports the screen plan back via ask-back; you approve or iterate, then
   forward it to the frontend executor as part of the brief.
 - **Complex ticket** (cross-cutting, ambiguous, or the brief exposed
@@ -49,15 +47,14 @@ report-back instruction (`maestri ask "<your name>" "<summary>"` when
 done). Dispatch it in the background — see [Dispatch is always background](dispatch.md).
 
 Universal constraints for every executor prompt, on top of the config's:
-tests are mandatory (nothing ships without regression tests and passing
-lint), CodeGraph before grep where indexed, context7 for library APIs.
+use the repository's required checks and meaningful coverage for the changed behavior. Reuse existing tests. Add a test only for an uncovered behavior or concrete risk; do not mirror implementation details or increase test count for its own sake. Apply this rule to executors, testers, and reviewers. Follow global CodeGraph and documentation rules.
 
 ### 5. Review fan-out
 
 When the Executor reports back, fan out in one parallel batch with
 `maestri ask --batch`, in the background, one entry per active review seat (Static + Security
 always; QA seat when a frontend surface was touched). Each prompt: the
-brief, the changed files, and that seat's review ask from the seat matrix.
+brief, the changed files, and that seat's review ask from the seat matrix. Tell each reviewer to identify actual coverage gaps, not demand a new test by default. Run only relevant checks plus required repository gates; retain the existing reviewer seats.
 
 Triage the findings yourself: drop noise, send real issues back to the
 Executor as a fix list, re-run only the reviews that flagged them. Loop
@@ -69,8 +66,11 @@ opinions forever.
 1. Pass the config's CI command from the repo root. Red gate means no
    commit. Out-of-scope failures get reported to the user, never committed
    around.
-2. Verify the active gh account matches the config
-   (`gh auth status`); `gh auth switch -u <account>` if not.
+2. Use the directory-routed `~/.local/bin/gh`. Verify identity with
+   `gh api user --jq .login` when authentication needs checking. Each company
+   has its own `GH_CONFIG_DIR`; never change a shared active account. Follow
+   the global directory/account mapping. If the project config disagrees,
+   resolve the mismatch before authenticated work.
 3. Commit, push, open the PR against the config's base branch, title in the
    config's format (ticket key first so the tracker links it).
 4. Move the ticket to the config's **in review** state.
@@ -83,4 +83,3 @@ opinions forever.
 7. After the user approves and the merge lands, confirm the ticket closed
    (config's **done** state), delete the ledger, then pick up the next
    ticket or report the cycle done.
-

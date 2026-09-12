@@ -84,7 +84,7 @@ argocd app diff <APP_NAME>
 
 If the diff shows unexpected massive deletions, STOP and ask the user for confirmation.
 
-**Reading diffs:** If the diff only shows image tag changes, this is typically from CI/CD auto-updates and is safe to sync.
+**Reading diffs:** Image-only changes can still be material releases. Verify the intended revision, environment, and authorized rollout stage before syncing.
 
 ## 3. Sync & Deployment
 
@@ -131,11 +131,7 @@ argocd app actions run <APP_NAME> promote-full --kind Rollout --resource-name <N
 argocd app actions run <APP_NAME> restart --kind Deployment --resource-name <NAME>
 ```
 
-**Argo Rollouts workflow:** When an app uses Argo Rollouts, `sync` triggers a canary deployment (partial traffic). You MUST run `promote-full` after sync to complete the full rollout. Typical flow:
-1. `argocd app diff <APP>` — check what changed
-2. `argocd app sync <APP>` — triggers canary
-3. Verify canary is healthy
-4. `argocd app actions run <APP> promote-full --kind Rollout --resource-name <NAME>` — full rollout
+**Argo Rollouts workflow:** Inspect the application's rollout strategy and requested stage. Sync within the authorized environment and revision. Verify the reached stage. Run `promote-full` only when the requested scope and project policy call for full promotion; a sync request alone does not authorize it.
 
 ## 6. Troubleshooting
 
@@ -143,7 +139,7 @@ argocd app actions run <APP_NAME> restart --kind Deployment --resource-name <NAM
 |---------|-------|-----|
 | `Unauthenticated` / `token expired` | Auth token expired | `argocd relogin` or `argocd login <SERVER> --grpc-web --sso` |
 | Perpetual diff on HPA | Metrics field ordering | Ensure HPA metrics order: memory first, cpu second (matches K8s API server return order) |
-| Diff shows only image tag changes | CI/CD auto-updated image | Expected behavior, safe to sync |
+| Diff shows only image tag changes | CI/CD auto-updated image | Verify revision and authorized rollout stage before syncing |
 
 ## Best Practices
 
@@ -152,4 +148,4 @@ argocd app actions run <APP_NAME> restart --kind Deployment --resource-name <NAM
 3. **GitOps Awareness:** ArgoCD reconciles from Git. Manual `kubectl` changes will be overwritten on next sync. Prefer Git commits + ArgoCD sync.
 4. **Async for Batch:** Use `--async` when syncing multiple apps to avoid blocking.
 5. **Targeted Sync:** Use `--resource` to sync only the changed resource instead of the entire app.
-6. **Rollout Awareness:** After syncing an app with Argo Rollouts, remember to `promote-full` to complete the rollout.
+6. **Rollout Awareness:** Stop at the requested rollout stage. Do not promote beyond the authorized scope.

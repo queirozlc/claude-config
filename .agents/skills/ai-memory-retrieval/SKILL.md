@@ -2,11 +2,11 @@
 name: ai-memory-retrieval
 description: "Use this skill for any request whose goal is read-only retrieval from ai-memory: project history, prior context, decisions, rules, gotchas, recent activity, full wiki pages, or status/briefing. Trigger by semantic intent rather than exact wording, including when ai-memory is not named."
 ---
-<!-- ai-memory-managed: routing-skill -->
+<!-- User-owned routing customization, 2026-09-12. Managed installers must preserve this file. -->
 
 # ai-memory retrieval
 
-Use this skill for read-only ai-memory lookups, catch-up, and evaluating remembered project knowledge before you design, debug, or edit.
+Use this skill for read-only ai-memory lookups when the task depends on prior project context or a standing rule requires retrieval.
 
 ## Tools in this cluster
 
@@ -18,14 +18,19 @@ Use this skill for read-only ai-memory lookups, catch-up, and evaluating remembe
 - `memory_briefing` returns a structured read-only snapshot for agent consumption.
 - `memory_explore` returns a prose digest when the user asks for an open-ended catch-up.
 
-## Scope default
+## Project scope
 
-Default to the current project. The tools auto-scope from the working directory, so omit project, workspace, and cwd arguments unless the user explicitly names a different project. Phrases like this project, here, we, our work, and where did we leave off mean the current project.
+Choose scope from the MCP client's identity support:
+
+- **Session-aware MCP clients** that forward the real lifecycle-hook session id on every request should use automatic current-project routing. Omit `workspace`, `project`, and `cwd` for the current repository; pass explicit scope only when the user names a different project.
+- **Static MCP clients** (including clients with lifecycle hooks but no bridge connecting that hook session id to MCP requests) must pass `workspace` and `project` together on every project-scoped call, including requests about this project, here, or our work. Read the exact names from the nearest `.ai-memory.toml` when it declares both. If it does not, obtain the names from the operator or server configuration; never guess them from a directory name and never rely on the server's last active project.
+
+This rule applies only to project-scoped calls. For cross-project retrieval, `global=true` must omit `workspace`, `project`, and `scopes`. For a standing preference written with `scope: "global"`, omit `workspace` and `project`.
 
 ## Choose the smallest useful lookup
 
-- Use the search tool when the user asks whether something was discussed, before proposing architecture, or before non-trivial coding in a subsystem with possible prior decisions.
-- Before non-trivial coding, debugging, deployment, release, auth, scope, migration, PR review, or data-preservation work, search memory for the subsystem and task type first. If the first search is thin, broaden or query more specific subsystem/error terms before designing a fix.
+- Use the search tool when the user asks about earlier work or the current task depends on prior project decisions.
+- Do not make retrieval a prerequisite for every non-trivial task. When prior context is relevant or a standing rule requires it, search for the subsystem and task. Broaden a thin result only when the missing prior context still matters.
 - Use the recent-pages tool for a quick what changed lately view.
 - Use the status tool only for health and size questions.
 - Use the structured briefing when code needs counts, windows, pending-handoff counts, current rules, or recent pages as JSON-like data.

@@ -17,12 +17,21 @@ unless the user explicitly asks you to.
    the right Maestri workspace.
 2. A ship config for the current project. Resolution order:
    `.agents/ship.md` at the repo root (agent-neutral, preferred), then
-   `.claude/ship.md` (legacy), then `~/.agents/ship/<repo-name>.md` (for
-   repos where personal orchestration config cannot be committed).
+   `.claude/ship.md` (legacy), then `~/.agents/ship/<repo-name>/ship.md` (for
+   repos where personal orchestration config cannot be committed;
+   `<repo-name>` is the checkout's basename).
    If none exists, run the [Init flow](references/setup.md) before doing anything else.
 
-If the ticket does not exist yet (the user brings a raw idea), stop: that is
-the triage phase, run `/grill-me` first and come back once issues exist.
+A `CLAUDE.md` next to the resolved config is part of the config. Read it
+right after `ship.md`; no harness loads it on its own. It holds the project
+instructions for the Maestro (conventions, house rules, memory pointers).
+Apply it for the whole cycle and copy the parts a seat needs into that seat's
+brief.
+
+If the ticket does not exist yet, clarify the scope through the host's question
+tool and prepare a concrete issue with the configured tracker workflow. Start
+the ticket cycle once the required issue exists. Do not depend on a removed
+interview alias.
 
 ## Scope and selection
 
@@ -44,4 +53,3 @@ Read each reference when its condition applies. References are parts of this ski
 | Update state, resume work, or handle context overflow | [Cycle state ledger and handoffs](references/state.md) |
 
 The cycle reference defines intake through merge. Floor mode replaces team assembly for the master. Its floor Maestro runs the normal cycle. Preserve the existing recruitment, CI, and per-PR merge boundaries.
-

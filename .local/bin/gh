@@ -1,0 +1,7 @@
+#!/bin/sh
+# Route each invocation from its working directory, including after shell cd.
+. /Users/lucasqueiroz/.config/github/route.sh
+github_environment || exit
+# Stored profile credentials must not be overridden by an inherited token.
+unset GH_TOKEN GITHUB_TOKEN GH_ENTERPRISE_TOKEN GITHUB_ENTERPRISE_TOKEN
+exec /opt/homebrew/bin/gh "$@"
