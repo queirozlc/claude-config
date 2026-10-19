@@ -86,6 +86,8 @@ Web lines carry the browser portal's extra detail (`href=`, `type=`, `options=[�
 - `maestri portal scroll "Sim" down 400` — swipe-scroll up/down/left/right by an amount
 - `maestri portal swipe "Sim" @e3 @e9` — drag between two points; each end is `@ref` or `"x,y"`
 - `maestri portal button "Sim" home` — press a hardware button (`home`, `lock`, `side`)
+- `maestri portal rotate "Sim" [landscape-left|landscape-right|portrait|upside-down]` — rotate the device; no argument turns it clockwise. Snapshot again afterwards.
+- `maestri portal pinch "Sim" 2 [@e3|x,y]` — pinch around a point (the center by default); above 1 zooms in, below 1 zooms out. iOS only.
 
 ### Resizable iOS apps
 
@@ -109,6 +111,38 @@ snapshot: element refs and coordinates from before are stale. Only one portal ca
 simulator's resize session at a time; unloading or closing the portal ends it. A failed resize
 exits nonzero with the reason. Android portals do not support these commands. Changing
 `DEVELOPER_DIR` in a terminal does not change what the running Maestri uses.
+
+### Foldable iPhones (iPhone Duo)
+
+iPhone Duo folds, and Maestri moves its hinge the way Xcode's pose controls do. It needs Xcode
+27.1 or later and an iPhone Duo simulator on the iOS 27.1 runtime. The portal always streams
+the panel that is lit, turned upright: the cover screen when the device is folded, the large
+inner screen when it is open.
+
+- `maestri portal pose "Duo"` (or `pose "Duo" status`): read the pose, one `key: value` line
+  per fact: `pose` (folded, book, laptop, flat, standby, or custom), `hinge_angle` in degrees,
+  `orientation`, `lit_panel` (cover or inner, with its screen ID and how far it is turned),
+  and `view` (screen or 3d). It asks the device first, so a fold made in Xcode shows up.
+- `maestri portal pose "Duo" flat`: apply a preset. `folded` is 0°, `book` is 90° held upright,
+  `laptop` is 110° with the crease horizontal, `flat` is 180°; `closed` and `open` work too.
+  `standby` is Book standing on a table: it locks the device, and StandBy comes up on the
+  inner screen (the first time, iOS shows its "Welcome to StandBy" screen). Any other preset
+  takes it off the table; `button "Duo" home` unlocks.
+  The hinge sweeps there the way a hand would, and the command returns once the device has
+  settled.
+- `maestri portal pose "Duo" 135`: fold to any angle from 0 (closed) to 180 (flat).
+- `maestri portal pose "Duo" landscape-left`: turn the device. `portrait`, `landscape-left`,
+  or `landscape-right`. iOS doesn't honor upside down on this device, so it isn't offered.
+- `maestri portal screenshot "Duo" 3d`: a PNG of the device as a 3D model in its current pose,
+  with the live screen on it. Use it to show or check a pose; tap coordinates still come from
+  a plain `screenshot` or `snapshot`.
+
+The device decides which panel is lit: the inner screen from about 85° up, the cover below
+that, whether it is opening or closing. So `pose "Duo" 80` shows the cover and
+`pose "Duo" 85` the inner screen; the switch can take a second or two to follow the hinge.
+`lit_panel` always says which one it is. After every pose change take a new snapshot,
+since refs and coordinates from the other panel are stale. `info` lists the pose too. Poses
+work on a portal on any floor; a device without a hinge answers `pose` with an error.
 
 ### Apps & lifecycle
 - `maestri portal launch "Sim" com.apple.mobilesafari` — launch an app by bundle id

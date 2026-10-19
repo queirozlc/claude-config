@@ -2,7 +2,7 @@
 
 ### 0. Assemble the team
 
-Floor mode (`floor` in the request) replaces this step. See [Floor mode](floor.md).
+Floor mode (the default, unless the request says `ground`) replaces this step. See [Floor mode](floor.md).
 
 `maestri list`. Fill the config's seat table: connect disconnected
 teammates, recruit missing ones. If the canvas is empty and the config names
@@ -13,7 +13,8 @@ a partitura, ask the user to load it instead of recruiting from scratch.
 Fetch the issue with the config's tracker tooling. Move it to the config's
 **in progress** state before any code is written. Keep the state accurate
 for the whole cycle; a stale state is a bug. Create the cycle state ledger
-now (see [Cycle state ledger](state.md)).
+now (see [Cycle state ledger](state.md)), with `Thread:` set to the Maestri
+Chat color the ticket started in ([Thread per ticket](state.md#thread-per-ticket)).
 
 ### 2. Context pass (you, the Maestro)
 
@@ -40,7 +41,8 @@ ticket references past work). This brief travels with every prompt you send.
 
 ### 4. Execute
 
-Send the Executor one self-contained prompt: ticket key and description,
+Run the [seat prep](dispatch.md) on the Executor first. Then send the Executor
+one self-contained prompt for one work package: ticket key and description,
 your context brief, the approved plan if there is one, the config's
 **Executor constraints** block for the touched surface(s), and the
 report-back instruction (`maestri ask "<your name>" "<summary>"` when
@@ -50,6 +52,10 @@ Universal constraints for every executor prompt, on top of the config's:
 use the repository's required checks and meaningful coverage for the changed behavior. Reuse existing tests. Add a test only for an uncovered behavior or concrete risk; do not mirror implementation details or increase test count for its own sake. Apply this rule to executors, testers, and reviewers. Follow global CodeGraph and documentation rules.
 
 ### 5. Review fan-out
+
+Run the [seat prep](dispatch.md) on every review seat before each dispatch,
+and on the Executor before each fix round. Read a report's `## Summary`
+first, not the whole file.
 
 When the Executor reports back, fan out in one parallel batch with
 `maestri ask --batch`, in the background, one entry per active review seat (Static + Security
@@ -81,5 +87,6 @@ opinions forever.
    the user gives explicit permission for THIS PR. Permission for a
    previous PR does not carry over. No exceptions.
 7. After the user approves and the merge lands, confirm the ticket closed
-   (config's **done** state), delete the ledger, then pick up the next
-   ticket or report the cycle done.
+   (config's **done** state), ask the user to clear the ticket's thread
+   color, delete the ledger, then pick up the next ticket or report the
+   cycle done.

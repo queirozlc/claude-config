@@ -36,7 +36,7 @@ The note carries exactly this:
 ## Which CV to send
 
 `<absolute path to the PDF>`
-File Readability PASS · Role Eligibility PASS · Resume Evidence PASS (<NN>/100) · Recruiter Readability <NN>/100
+Posting Analysis GO · Gate PASS · Required coverage <NN>/100 · Preferred coverage <NN>/100
 
 ## Recruiter
 
@@ -95,9 +95,9 @@ Lucas reads this one note to apply to everything. It carries:
 
 Found <N> · dropped <N> at triage · approved <N> · delivered <N> · abandoned <N>
 
-| #   | Company · Role                      | Segment   | Lang | Primary stack      | Resume                | Blocking checks | Resume Evidence | Recruiter Readability | Recruiter · channel      | Apply within |
-| --- | ----------------------------------- | --------- | ---- | ------------------ | --------------------- | --------------- | --------------- | --------------------- | ------------------------ | ------------ |
-| 1   | [<Company> — <Role>](<posting url>) | us-direct | en   | TypeScript/Node.js | `<absolute PDF path>` | PASS/PASS/PASS  | 94              | 81                    | <Name> · <email/DM/form> | <N> h        |
+| #   | Company · Role                      | Segment   | Lang | Primary stack      | Resume                | Analysis · Gate | Required cov. | Preferred cov. | Recruiter · channel      | Apply within |
+| --- | ----------------------------------- | --------- | ---- | ------------------ | --------------------- | --------------- | ------------- | -------------- | ------------------------ | ------------ |
+| 1   | [<Company> — <Role>](<posting url>) | us-direct | en   | TypeScript/Node.js | `<absolute PDF path>` | GO · PASS       | 100           | 67             | <Name> · <email/DM/form> | <N> h        |
 
 ## Cold messages
 
@@ -115,8 +115,9 @@ Send to: <channel>
 - <Company> — <Role>: <one-line reason>
 ```
 
-Every value comes from the application ledgers, the review reports, and the
-message files. Never write a score that is not in a Sieve review report.
+Every value comes from the application ledgers, the analysis reports, the
+gate reports, and the message files. Never write a score that is not in a
+gate report.
 The per-application `apply-<slug>` notes stay; the summary links nothing
 new, it collects.
 

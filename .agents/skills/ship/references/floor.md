@@ -1,9 +1,11 @@
-## Floor mode (the `floor` modifier)
+## Floor mode (the default)
 
-`floor` is a modifier on a normal ship, not a subcommand. Position does not
-matter: `/ship HOB-66 floor`, `/ship floor HOB-66` and "ship HOB-66 on a new
-floor" are one request. Without it the cycle runs on the ground floor, as
-before. Requires Maestro Mode.
+Every `/ship TICKET` runs on a new floor. A floor is a git worktree of the
+project: a branch in the same repository. The word `ground` in the request
+(`/ship HOB-66 ground`) opts out and runs the cycle on the ground floor.
+Position does not matter. The word `floor` is still accepted and changes
+nothing. Requires Maestro Mode. If the project is not a git repository, or
+Maestro Mode is off, tell the user and ask before you fall back to ground.
 
 **One master, one Maestro per floor.** In floor mode you do not run the ticket
 cycle. You are the master: you create the floor, staff it, hand the ticket to a
@@ -13,17 +15,22 @@ of their context.
 
 **The ground floor rule.** The master stays on the ground floor and writes no
 code, so the ground checkout sits on the base branch for the whole cycle. A
-floor is a copy of the ground directory, so a floor created from a ground on
-`main` gets a branch based on `main`. That is how the base stays correct; the
+floor is a worktree cut from the ground checkout, so a floor created from a
+ground on `main` gets a branch based on `main`. That is how the base stays correct; the
 CLI has no `--base` flag. Two duties follow. Pull the base branch **before**
 every `floor create`, or the floor starts stale and the PR needs a rebase. And
 never `git checkout` a ticket branch on the ground floor, not even to look at
 it; read the floor's clone instead.
 
-**A recruit is not a Maestro.** `recruit`, `connect`, `dismiss`, `floor create`,
-`notify`, `role *` and `preset list` are all Maestro-only. A floor Maestro has
-`ask`, `check`, `note *` and `portal *` and nothing else. It asks the master for
-the rest. Do not tell it to recruit its own seats.
+**A floor Maestro is a Maestro.** It has the full `maestri` toolset. Two rules
+split the work, and they are rules, not missing capabilities:
+
+- The master creates floors and recruits the floor Maestro and the first
+  seats, because adding a seat needs the user's yes (see
+  [Seat matrix by surface](team.md)).
+- A floor Maestro restarts its own seats with `recruit ... --replace` (see
+  [seat prep](dispatch.md)). It does not add or dismiss seats. It asks the
+  master for that. The master restarts the floor Maestro.
 
 Replace step 0 with this:
 
@@ -32,7 +39,13 @@ Replace step 0 with this:
    follows the config's floor naming convention; default to the ticket key plus
    a short slug. Never pass `--copy-ground`. The floor must come up **empty**.
 3. Wait for the command to return. That is the entire step. Creating a floor
-   staffs nothing. If a terminal you did not recruit appears there, ignore it;
+   staffs nothing. Then run
+   `~/.agents/ship/link-local.sh "<floor path>"` before any recruit. `CLAUDE.local.md`
+   and `.claude/settings.local.json` are git-ignored, so a worktree does not carry
+   them. The script gives the floor the same `CLAUDE.local.md` link as the ground
+   (it reuses the ground's link target) and the ledger Stop hooks. Check with
+   `ls -l "<floor path>/CLAUDE.local.md"`. If the link is missing, stop and fix it;
+   a floor without it has no house rules. If a terminal you did not recruit appears there, ignore it;
    never adopt it as a seat.
 4. Recruit the floor Maestro onto the floor, naming it from the config's floor
    Maestro pool and giving it the config's Maestro role. Omit `--dir`: the
@@ -49,8 +62,9 @@ Replace step 0 with this:
    key, the floor name and clone path, the branch and its base, the seat roster
    by name, the ledger path, the ship config path, and these standing orders:
    run the cycle from the clone, own the ledger, dispatch every seat in the
-   background, report to `<master name>` by name, ask the master for anything
-   Maestro-only, and **never merge**. The handoff `ask` itself is a dispatch:
+   background, run the seat prep before every dispatch, tell `<master name>`
+   at 30% context so it can restart you, report to `<master name>` by name, ask the master to add or dismiss seats,
+   and **never merge**. The handoff `ask` itself is a dispatch:
    fire it in the background too.
 
 After the handoff you are a router. Answer the floor Maestro's requests, recruit

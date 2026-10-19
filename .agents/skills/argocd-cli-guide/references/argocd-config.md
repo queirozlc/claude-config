@@ -48,7 +48,9 @@ users:
 
 ```bash
 # SSO login (opens browser)
-argocd login argocd.example.com --grpc-web --sso
+# --skip-test-tls: without it, login can hang on the TLS probe and fail with
+# "gRPC connection not ready: context deadline exceeded" before the browser opens.
+argocd login argocd.example.com --grpc-web --sso --skip-test-tls
 
 # After login, grpc-web is persisted in config — future commands don't need the flag
 argocd app list  # Just works
@@ -57,8 +59,8 @@ argocd app list  # Just works
 ### Adding multiple servers
 
 ```bash
-argocd login argocd.server-a.com --grpc-web --sso
-argocd login argocd.server-b.com --grpc-web --sso
+argocd login argocd.server-a.com --grpc-web --sso --skip-test-tls
+argocd login argocd.server-b.com --grpc-web --sso --skip-test-tls
 
 # Switch between them
 argocd context argocd.server-a.com
@@ -76,7 +78,7 @@ When you get auth errors on a previously working server:
 argocd relogin
 
 # If that fails, full login again
-argocd login <SERVER_ADDRESS> --grpc-web --sso
+argocd login <SERVER_ADDRESS> --grpc-web --sso --skip-test-tls
 ```
 
 ## Disable Interactive Prompts

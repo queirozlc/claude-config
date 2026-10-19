@@ -82,14 +82,15 @@ Seniority target: <e.g. Senior preferred, strong Mid acceptable>
 
 ## Review checks
 
-- Hard: the File Readability Check, Role Eligibility Check, and required part
-  of the Resume Evidence Check must fully PASS. Every required token must
-  appear in `Skills` and in one relevant `Experience` bullet.
-- Reported, not blocking: preferred-token coverage in the Resume Evidence
-  Check and the Recruiter Readability Score.
-- Every blocked result must quote the exact posting requirement, list the
-  evidence checked and found, explain why it failed, classify the fix as
-  `CV FIX`, `LUCAS CONFIRMATION`, or `ROLE MISMATCH`, and give one next action.
+- Before the build: the Posting Analysis (`RUBRIC.md` Part 1) returns `GO`.
+  Role Eligibility passes and projected required coverage is at least 70.
+  A `NO-GO` posting is never built.
+- After the build: `scripts/resume_gate.py` (`RUBRIC.md` Part 2) passes.
+  Every required `CLAIM` token is in `Skills` and in one `Experience` bullet,
+  every anchor and stack-depth token is placed, and no `GAP` token is written.
+- Reported, not blocking: preferred coverage.
+- Every `NO-GO` or `ASK` quotes the exact posting requirement, the evidence
+  checked, and one next action.
 
 ## Delivery shape
 

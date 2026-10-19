@@ -9,8 +9,8 @@ unless the source runner later reports a parser failure.
 
 **Base check.** Read `~/career/resumes/base-en.tex`. If its bullets do not
 follow the voice rule in `CV-SPEC.md` (first person, past tense, subject
-omitted; `I` in the Summary), dispatch a base round to the Architect and a
-File Readability Check plus Recruiter Readability Score run to the Analyzer before any tailoring. A tailored CV
+omitted; `I` in the Summary), dispatch a base round to the Architect and the
+base-round File Readability Check (`RUBRIC.md` Part 2) to the Analyzer before any tailoring. A tailored CV
 copies the base; a wrong base makes every tailored CV wrong. Sourcing does
 not depend on the base, so start the deterministic source runner at the same time.
 
@@ -73,7 +73,6 @@ First apply the config's **triage knockouts** and drop every hit:
 - Any role labeled `Reposted`.
 - Any role that states `Over 100 applicants`, `100+ applicants`, or more than
   100 people clicked Apply. Do not infer a count when it is not visible.
-- Apply destination on Gupy.
 - Company blocklist (config).
 - Hybrid or on-site anywhere. Remote only.
 - Primary language or runtime outside JavaScript, TypeScript, Node.js, and Go.
@@ -107,9 +106,10 @@ finishes, while the source runner searches Posts. Wave 2 contains accepted Posts
 postings. Start it as soon as Posts triage finishes. A wave is a queue, not a
 worker batch: every dispatch carries one posting.
 
-Keep the seats pipelined. When the Architect completes one CV, immediately
-send that CV to the Analyzer and send the next queued posting to the
-Architect. Do not wait for the full wave, the Posts search, or all CVs before
-starting a completed CV's review. The source runner, Architect, and Analyzer can run at
-the same time, but each seat handles only one posting or surface at a time.
+Keep the seats pipelined, in this order: the Analyzer analyzes posting N+1
+while the Architect builds posting N. When the Analyzer returns `GO`, queue
+the posting for the Architect. `NO-GO` postings never reach the Architect.
+Collect `ASK` questions and send them to the user in one batch per wave. The
+source runner, Analyzer, and Architect can run at the same time, but each
+seat handles only one posting or surface at a time.
 

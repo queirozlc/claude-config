@@ -1,83 +1,121 @@
-## Worker context hygiene
+## Context budget and seat restarts
 
-You manage every seat's context window, not only your own.
+You manage every seat's context window, and your own. Past about 150k tokens
+every turn costs more, even with a cache, and long context lowers the quality
+of the output. A cache saves money, not quality: the seat still carries stale
+copies of files it already edited. Numbers below are the `ctx N%` on the
+status line of a 1M window.
 
-- Before you send a seat a task unrelated to its last one (new ticket,
-  different surface, review of code it never saw), reset its session:
-  `maestri ask "<name>" --raw "<reset cmd>\n"` with the config's Reset cmd.
-- Never reset a seat mid-task or mid-ticket while it holds useful state
-  (the executor working the current ticket's fix list).
-- Every prompt stays self-contained (brief included), so a reset never
-  loses required information.
-- Track each seat's last task in the ledger's **Seat sessions** field.
-  Dirty context + unrelated next task = reset first.
-- Older configs lack the Reset cmd column. Detect each seat's harness,
-  confirm the command with the user once, add the column to the config.
+| Who | Ceiling |
+| --- | ------- |
+| Executor, reviewer, QA, planner seats | 20% (200k) |
+| Maestro, ground or floor | 30% warn, 35% hard stop |
+
+### Seat prep (before every dispatch)
+
+Single ask, batch entry, fix round: run this first.
+
+1. `maestri check "<name>"`. Read the `ctx N%` on the status line. A seat that
+   is still working is never restarted. Wait for its report.
+2. Restart the idle seat when any of these is true:
+   - ctx is at or above its ceiling
+   - the next task is unrelated to its last one (new ticket, other surface,
+     code it never saw)
+   - it is an executor at 10% or more (see the table below)
+3. Restart with the seat's **Reset cmd** from the config. It is the
+   `maestri recruit ... --replace "<name>"` line. It restarts the process in
+   place and keeps the node, ropes and position. Wait about 10 seconds, then
+   `maestri check "<name>"` and confirm ctx is low (a fresh seat is 5% to 8%).
+   Do not use `--raw "/clear\n"`. It goes in as keystrokes, returns at once,
+   and nothing confirms it worked.
+4. Log the restart in the ledger and set the **Seats** field to `clean`.
+
+Every prompt stays self-contained (brief included), so a restart never loses
+information. State lives in the ledger, the brief, sibling files and the git
+diff, not in a seat's memory.
+
+| Seat | Default |
+| ---- | ------- |
+| Executor | Restart before every dispatch (new package, fix round) unless ctx is under 10%. It writes code from a brief and rereads files with CodeGraph. It decides nothing, so it loses nothing. |
+| Static and Security reviewer | Restart before a full review, for fresh eyes. Keep the seat for a re-check of only the flagged items while ctx is under the ceiling. |
+| Web QA | Restart every round. Screenshots are heavy. |
+| Planner, Design planner | Restart per ticket. |
+
+Executor budget:
+
+- Size one dispatch as one work package: one layer or one feature slice,
+  about 10 files. If a package would not fit in about 150k, split it before
+  you send it.
+- The executor brief must say: read with `codegraph_explore`, not Read loops;
+  do not reread a file you just wrote; give wide read-only research to a
+  sub-agent; if ctx reaches 20% before you finish, stop at the next clean
+  point, write `<ticket-key>-progress-<seat>.md` (done, remaining, files
+  touched) and report.
+- An executor that reports above 25% got a package that was too big. Log it
+  and split the next one smaller.
+
+Your own budget:
+
+- At 30%: finish the step, write the ledger, and stop taking new detail.
+  Use `/compact` only for a mid-task squeeze.
+- At 35%: stop. A ground Maestro updates the ledger and asks the user for
+  `/clear`. A floor Maestro tells the master. The master restarts it when it
+  is idle: `maestri recruit ... --replace "<floor Maestro>"`, then re-sends
+  the handoff from the ledger.
+- Redirect every dispatch to a file. `maestri ask` prints the seat's whole
+  screen, and that lands in your context if you do not redirect it. Read only
+  the `## Summary` at the top of a report (seats write 15 lines or less
+  there). Open the details only when you need them.
+- Give big read-only research (Datadog, Confluence, long specs, wide code
+  reads) to a sub-agent that returns a summary file. Do not read it yourself.
+
+Older configs lack the Reset cmd column or hold `/clear` there. Replace each
+entry with the seat's `recruit --replace` line (the seat commands are in the
+config) and confirm it with the user once.
 
 ## Dispatch is always background (mandatory)
 
-`maestri ask` blocks until the target goes idle. A blocking ask in your
-foreground makes the human Ctrl+B you out of your own wait. So **every
-dispatch that carries work runs through your harness's background
-mechanism** — single ask, `--batch` fan-out, planner, design planner,
-executor, fix round, floor handoff. No exceptions.
+A dispatch is a wait, and a wait in your foreground makes the human Ctrl+B
+you out of it. `maestri ask` is also not a safe wait: it must return when the
+seat goes idle, but it often does not (measured on 6 and 7 October 2026,
+`~/.agents/ship/feedback/`). A Maestro that waits on the ask alone can stand
+still with every seat idle.
 
-| Coordinator harness | Background mechanism |
-| ------------------- | -------------------- |
-| Claude Code | Bash tool with `run_in_background: true`, then `Monitor` / `TaskOutput` |
-| Codex | `exec_command` with `yield_time_ms: 1000`, then `write_stdin` on its returned `session_id`. Follow the procedure below. |
-| Other harness without tracked background tools | `maestri ask ... > <ledger-dir>/<ticket>-<seat>.out 2>&1 &`, then poll the file |
+So **every dispatch that carries work is one `~/.agents/ship/dispatch.py`
+command, run in the background** — single ask, `--batch` fan-out, planner,
+design planner, executor, fix round, floor handoff. No exceptions. The script
+sends the ask and waits for the report file, which is the wake signal.
 
-### Codex coordinator procedure
+```sh
+~/.agents/ship/dispatch.py --out <ledger-dir>/<task-id>.out \
+  --report <ledger-dir>/<task-id>-report.md --timeout-min 30 -- \
+  maestri ask "<seat>" "$(cat <ledger-dir>/<task-id>.prompt.md)"
+```
 
-Use this procedure when Codex is the coordinator or Maestro, regardless of
-which harness runs the worker. It applies to every work dispatch, including
-review batches and floor handoffs. The detached fallback does not apply.
+| Coordinator harness | How to run it in the background |
+| ------------------- | ------------------------------- |
+| Claude Code | Bash tool with `run_in_background: true`. The harness notifies you when the script exits |
+| Other harness without tracked background tools | Append `&`, then poll the `--out` file and the report |
 
-1. Write a self-contained prompt file next to the ledger. Use a unique task ID
-   for each seat and review or fix round. Specify the scope, inputs, expected
-   output, and report path. Do not overwrite an earlier report. Give each seat
-   at most one active task.
-2. Tell the worker to write its full report to that path and finish its turn.
-   Do not require a `maestri ask` back to this Codex coordinator. This replaces
-   the ask-back examples elsewhere in this skill. The coordinator tracks the
-   original dispatch until it returns. A floor Maestro still dispatches its
-   own team through its own harness's background mechanism.
-3. Run the command through `exec_command`, with `workdir` set to the task's
-   checkout and `yield_time_ms: 1000`. Redirect output next to the ledger:
-
-   ```sh
-   maestri ask "<seat>" "$(cat <ledger-dir>/<task-id>.prompt.md)" > <ledger-dir>/<task-id>.out 2>&1
-   ```
-
-   Substitute real paths and quote them if needed. Use the same tracked tool
-   session for `maestri ask --batch`. Do not append `&`, use `nohup`, or launch
-   a detached subprocess. The tool yields while the command stays tracked.
-4. If the tool returns a `session_id`, immediately record it in the ledger's
-   Seats field with the task ID, output path, report path, and next action.
-   Append the dispatch event to the log. If it exits immediately, inspect the
-   exit status and report. Do not invent a session ID.
-5. Poll the same session with `write_stdin`:
-
-   ```json
-   {"session_id":12345,"chars":"","yield_time_ms":20000,"max_output_tokens":1000}
-   ```
-
-   Replace `12345` with the returned ID. Continue useful independent work
-   between polls. If `functions.exec` returns a running cell ID, resume it
-   with `functions.wait` first to get the nested `exec_command` result. A
-   functions cell ID is not an exec session ID.
-6. After a user interruption, resume the same session. Do not resend the task.
-   Do not end the cycle after announcing a dispatch. Wait for completion,
-   read the output and report, and then continue the next cycle step. If a
-   saved session is no longer available after a restart, inspect the output,
-   report, and `maestri check` before deciding whether work needs resumption.
+- `--out` gets the seat's screen. Do not add your own redirect.
+- The script returns when every `--report` file is written after the
+  dispatch, or when the ask returns, whichever is first. Then it stops the
+  ask.
+- For `maestri ask --batch`, give one `--report` for each seat.
+- Each prompt names a report path that no earlier round used. A report from
+  before the dispatch does not count.
+- Each prompt also ends with the ask-back line
+  (`maestri ask "<Maestro>" "<task-id> done: <report file>"`). It is the
+  second signal. Never tell a seat to finish with no ask-back.
+- Exit 2 is a timeout: the seat wrote no report. Do not re-send. Run
+  `maestri check "<seat>"`, log it, and decide. Set `--timeout-min` to about
+  2 times the expected work.
 
 ### Shared dispatch rules
 
-- Redirect the output to a file next to the ledger. The reply is the seat's
-  report; it must survive your context clear.
-- Poll, do not re-send. On timeout or an empty file, `maestri check "<name>"`.
+- The `--out` file and the report are next to the ledger. They must survive
+  your context clear.
+- Never re-send. On a timeout or a missing report, `maestri check "<name>"`.
   A re-sent prompt gives the seat two tasks.
 - Log the dispatch in the ledger the moment you fire it, not when it returns.
   A dispatch nobody logged is a dispatch nobody can resume.

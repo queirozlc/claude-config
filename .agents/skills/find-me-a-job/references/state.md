@@ -37,14 +37,15 @@ One per posting the user approved. Independent. Resumable. Abandonable.
 ```markdown
 # <company> — <role> — application state
 
-Phase: <0-intake | 1-context | 2-tailor | 3-review | 4-package | 5-delivered | 6-applied | abandoned>
+Phase: <0-intake | 1-analysis | 2-go-no-go | 3-build | 4-verify | 5-package | 6-delivered | 7-applied | abandoned>
 Segment: <us-direct | br-pj | agency>
 Language: <en | pt | es>, decided at intake from the posting
 Posting: <url, or "posts-only, no link">
 Posted: <YYYY-MM-DD HH:MM, and age at intake>
 Recruiter: <name · profile url · contact channel, or "none">
 CV: <path to the tailored file, or "not started">
-Review: <not run | BLOCKED: <check name>, because <exact reason> | PASS>
+Analysis: <not run | GO | ASK: <questions> | NO-GO: <exact reason>>
+Gate: <not run | FAIL: <check names> | PASS>
 Note: <Maestri note name, or "none">
 Next: <one concrete sentence>
 Open: <one line per unresolved item, or "none">
@@ -52,10 +53,12 @@ Open: <one line per unresolved item, or "none">
 ## Log
 
 - 10:02 intake, posting 6h old, 4 comments, language en
-- 10:14 Quill dispatched to tailor from base-en.tex
-- 10:41 Sieve review: BLOCKED by Role Eligibility, posting requires four hours of PST overlap and no approved source confirms it; LUCAS CONFIRMATION
-- 10:52 Quill fix round 1
-- 11:03 Sieve review: PASS. Resume Evidence 74/100, Recruiter Readability 81/100
+- 10:08 Sieve posting analysis: ASK, posting requires four hours of PST overlap and the DOSSIER is silent; LUCAS CONFIRMATION
+- 10:20 Lucas confirmed; verdict GO, projected required coverage 86
+- 10:21 Quill dispatched to build from base-en.tex and the manifest
+- 10:40 gate FAIL: spec_placement, SQS not in the Luizalabs role
+- 10:48 Quill fix round 1
+- 10:50 gate PASS. Required coverage 86/100, preferred 67/100
 - 11:05 note "apply-acme-senior-node" written, user notified
 ```
 

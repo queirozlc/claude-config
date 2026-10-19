@@ -40,18 +40,20 @@ To notify the user, you must run for example:
 maestri notify "The release is ready for your review."
 ```
 
-### `maestri recruit "Name" [--preset "Claude Code"] [--role "Reviewer"] [--floor "Experiment"] [--command "claude --resume"] [--dir "/path/to/project"]`
+### `maestri recruit "Name" [--preset "Claude Code"] [--role "Reviewer"] [--floor "Experiment"] [--workspace "Frontend"] [--command "claude --resume"] [--dir "/path/to/project"] [--account "Work"]`
 
 Spawns a new terminal on the canvas, names it, and auto-connects it to you. Returns when the terminal is created (the agent inside may still be booting — give it a few seconds before the first `ask`).
 
 **Precondition:** run `maestri list` first. If a connected teammate already covers this role, use `maestri ask` instead — don't recruit a duplicate.
 
 - **Name** (positional, **strongly recommended**) — pick a short codename for each teammate. The role already says what the recruit does; the name is its identity. **Invent the name yourself** — don't pull from a fixed list, and don't reuse names across teams. The codename can hint at the recruit's vibe (e.g. for a security reviewer, something watchful; for a UI designer, something visual; for a build-system specialist, something industrial) but should NOT restate the role. Vary your picks each session so two teams the user assembles don't look identical. Avoid reusing the role name (e.g. don't recruit "Frontend Developer" as `"Frontend Developer"`). The canvas appends `(2)`, `(3)`, ... if you happen to collide with an existing terminal.
-- **--preset** — one of the user's quick-start presets. Run `maestri preset list` to see what's available before passing this flag. **If omitted, defaults to a copy of yourself** — same agent type the user picked for you.
+- **--preset** — one of the user's quick-start presets. Run `maestri preset list` to see what's available before passing this flag. **If omitted, defaults to a copy of yourself** — same agent type the user picked for you, on the same account.
 - **--role** — name of an existing role preset. The recruit is launched in `.maestri/roles/<id>/` so the role's prompt becomes its starting context. Run `maestri role list` to see available roles, or `maestri role create` to add a new one before recruiting. Optional: omit when you just need a vanilla teammate and plan to set context via `maestri ask`.
 - **--floor**: place the recruit on a different floor of this workspace (run `maestri floor list` from the maestri-workspace skill to see floors; `--floor "Ground"` targets the ground level). When `--dir` is omitted, a git-isolated floor uses its own clone so the recruit's work can't touch the ground checkout. Omit `--floor` to recruit onto your own floor. The rope still connects it to you across floors; `ask`, `check`, and `dismiss` work the same.
+- **--workspace**: place the recruit in another workspace (its ground level, or `--floor` there; run `maestri workspace list` from the maestri-workspace skill to see workspaces). The recruit starts in that workspace's directory and runs where that workspace runs, since it is that project's agent. You address it as `Name @ Workspace`, exactly as `maestri list` prints it.
 - **--command** — override the shell command. Almost never needed; use the preset.
 - **--dir**: start the recruit in this working directory instead of inheriting yours. When combined with `--floor`, the explicit directory takes precedence over the floor's default checkout path. Omit it to keep the inherited behavior.
+- **--account**: run the recruit on one of the user's accounts for its CLI, so several agents can run side by side on different subscriptions or API keys. `maestri preset list` prints the account names after each preset that has them; `"Default"` is the CLI's existing login. It wins over an account the preset pins. Omit it to use the preset's account, or yours when the recruit is a copy of you (no `--preset`, no `--command`). Each account lives in one place, this Mac or a remote environment (`maestri preset list` names the place after a remote one), and only accounts that live where the recruit runs can be picked. `maestri list` shows which account each teammate runs on.
 
 Examples:
 
@@ -60,16 +62,21 @@ maestri recruit "<your-codename>" --role "Code Reviewer"
 maestri recruit "<your-codename>" --preset "Codex" --role "Test Writer"
 maestri recruit "<your-codename>"                  # vanilla teammate, copy of yourself
 maestri recruit "<your-codename>" --floor "Experiment" --role "Prototyper"
+maestri recruit "<your-codename>" --workspace "Frontend" --role "Reviewer"
 maestri recruit "<your-codename>" --dir "/path/to/another/project"
+maestri recruit "<your-codename>" --preset "Claude Code" --account "Work"
 ```
 
-**Isolated-experiment flow:** when the user wants risky or experimental work kept out of the main checkout, create a git-isolated floor first (`maestri floor create "Experiment" --branch feat/idea`, from the maestri-workspace skill), then recruit onto it with `--floor "Experiment"`. The recruit works in the floor's isolated clone on its own branch while you and the user stay on the ground floor. When the work is done and committed, `maestri floor land "Experiment"` (also from the maestri-workspace skill, from the ground) brings the branch back.
+**Isolated-experiment flow:** when the user wants risky or experimental work kept out of the main checkout, create a git-isolated floor first (`maestri floor create "Experiment" --branch feat/idea`, from the maestri-workspace skill), then recruit onto it with `--floor "Experiment"`. The recruit works in the floor's own checkout (a git worktree) on its own branch while you and the user stay on the ground floor. When the work is done and committed, `maestri floor land "Experiment"` (also from the maestri-workspace skill, from the ground) brings the branch back.
+
+**Floor status:** when you hand a recruit a task on a floor, ask it to keep `maestri floor status` current (start, milestones, `--state blocked` when it needs the user, `--state review` when ready), and end every task prompt with the ask back line (`maestri ask "Your Name" "<result>"`, from the base `maestri` skill), so the recruit tells you when it's done instead of waiting to be checked. `maestri floor list` shows every floor's status, so read it to see how the work stands instead of checking each recruit. Post a one-line summary for the user on the ground with `maestri floor status "2 of 3 floors in review" --floor "Ground"`.
 
 ### `maestri recruit "New Name" --preset "Codex" --replace "Old Name"`
 
 Swaps which agent runs on an existing teammate, **in place**. The terminal node survives, so its connections (notes, portals, peer ropes), canvas position, and any routines targeting it are all preserved; only the process restarts with the new agent. When the user asks to replace a teammate's agent (say, swap Claude for Codex), always use this instead of `dismiss` + `recruit`: dismissing deletes the node, and a note or portal wired only to that recruit becomes unreachable from the CLI.
 
-- `--preset` or `--command` is required: a replace exists to boot a different agent. Prefer `--preset`; with a bare `--command`, the terminal's type and icon follow the program when it matches one of the user's presets, otherwise the terminal is labeled Custom. Maestro powers only change with an explicit `--preset`.
+- `--preset` or `--command` is required to boot a different agent. Prefer `--preset`; with a bare `--command`, the terminal's type and icon follow the program when it matches one of the user's presets, otherwise the terminal is labeled Custom. Maestro powers only change with an explicit `--preset`.
+- `--account` moves the teammate to another account (names from `maestri preset list`; `"Default"` goes back to the CLI's existing login). Alone, it keeps the agent, role, and look and changes only the account; with `--preset`, it overrides the account the preset pins. The process restarts fresh either way.
 - The positional name renames the teammate; omit it to keep the current name.
 - `--role` reassigns the role in the same swap; omit it to keep the current role.
 - `--dir` changes the working directory; `--floor` is not supported because the node stays where it is.
@@ -78,6 +85,7 @@ Swaps which agent runs on an existing teammate, **in place**. The terminal node 
 ```
 maestri recruit "Codex" --preset "Codex" --replace "Claude"
 maestri recruit --preset "opencode" --replace "Scout"     # keeps the name "Scout"
+maestri recruit --replace "Scout" --account "Work"        # same agent, on the Work account
 ```
 
 ### `maestri dismiss "Name"`
@@ -105,7 +113,35 @@ Connecting two recruits alone isn't enough — recruits won't know to use the ne
 
 ### `maestri preset list`
 
-Lists the agent presets the user has configured (e.g. `Claude Code`, `Codex`, `Shell`, plus any custom presets). Run this before `maestri recruit ... --preset "..."` so you pass a name that actually exists.
+Lists the agent presets the user has configured (e.g. `Claude Code`, `Codex`, `Shell`, plus any custom presets). Run this before `maestri recruit ... --preset "..."` so you pass a name that actually exists. A preset whose CLI has more than one account lists the account names on its line (`accounts: "Default", "Work"`): those are the values for `--account`. A preset pinned to one adds which (`; starts on "Work"`).
+
+### `maestri preset show / create / set / delete`
+
+Manage the user's presets when they ask you to: the agents on their Quick Start, and the values `--preset` takes. Presets sync to the user's other Macs, so change them only on request.
+
+```
+maestri preset show "Claude Code"
+maestri preset create "Claude Opus" --command "claude --model opus" --account "Work"
+maestri preset set "Claude Opus" --maestro on --quick-start off
+maestri preset set "Claude Opus" --name "Opus" --command "claude --model opus --verbose"
+maestri preset delete "Opus"
+```
+
+- `--command` is one line, run as typed in a new terminal. Without it the preset is a plain shell.
+- `--account` takes an account name of that command's CLI, as `maestri preset list` prints them, or `"Default"`.
+- `--maestro`, `--chat` (start in chat mode) and `--quick-start` take `on` or `off`. Options you leave out stay as they are.
+- `create` and `set` reply with the preset as it now stands, so there's no need to `show` it after.
+- You don't pick the color or the icon: a new preset gets a random color, and its CLI's icon when Maestri knows the CLI or else a random one, and the user changes both in Settings.
+- Deleting a preset changes nothing for terminals already made from it.
+
+**Keep session resume working.** Maestri resumes an agent's conversation after a restart by reading the resume line the agent prints when it exits, and it finds that line by the name of the program the command launches. When the user wants a wrapper (fixed flags, environment variables, a different shell's config), write it into the command so it still launches the agent directly:
+
+- the agent's own flags after it: `claude --dangerously-skip-permissions --model opus`
+- environment variables in front: `ANTHROPIC_BASE_URL=http://localhost:4000 claude`
+- a full path: `/opt/homebrew/bin/codex --yolo`
+- a shell wrapper, to load that shell's config: `fish -c "claude --model opus"`
+
+A personal script (`cc`) or a runner in front (`op run -- claude`, `npx …`) hides the agent: its terminals start over instead of resuming. Prefer folding what the script does into the command as above.
 
 ### `maestri role list`
 
@@ -165,6 +201,6 @@ Chat history is lost in the restart (same as `role edit`), but the topology surv
 3. **Define roles** — `maestri role list` to see what already exists, `maestri role create` to fill gaps.
 4. **Recruit** each missing teammate with a distinctive codename and `--role` so each boots into the right mindset and reads as its own character on the canvas. Don't reuse the role name as the recruit name.
 5. **Optional** — `maestri connect` recruits to each other when they need to collaborate without you in the middle.
-6. **Delegate** with `maestri ask "Name" "task..."` (from the base `maestri` skill). To kick off several teammates at once, use `maestri ask --batch '{"Name A": "task...", "Name B": "task..."}'` — it fires the prompts in parallel and returns once every teammate finishes, so independent work runs concurrently instead of one after another.
+6. **Delegate** with `maestri ask "Name" "task..."` (from the base `maestri` skill), ending each task with the ask back line so the teammate reports to you in full when it's done. To kick off several teammates at once, use `maestri ask --batch '{"Name A": "task...", "Name B": "task..."}'` — it fires the prompts in parallel and returns once every teammate finishes, so independent work runs concurrently instead of one after another.
 
 Use `maestri list` at any point to see your current team and their roles. As a Maestro you also see each teammate's own connections (agents, portals, notes) nested beneath it, so you know exactly what a recruit is wired to before a `--replace` or a rewire. That tree is also your reach: a teammate's notes and portals resolve by name for you, so you can `note read` a recruit's note or drive its portal directly instead of relaying through `ask`.

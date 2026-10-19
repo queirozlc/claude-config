@@ -33,8 +33,14 @@ argocd app sync argocd/other-app
 
 **Login:**
 ```bash
-argocd login <SERVER_ADDRESS> --grpc-web --sso
+argocd login <SERVER_ADDRESS> --grpc-web --sso --skip-test-tls
 ```
+
+Always pass `--skip-test-tls` on a first login. Without it, the login can hang on the TLS probe. It then fails with `gRPC connection not ready: context deadline exceeded` (exit 20), before the browser opens. The server can still answer `curl https://<SERVER>/api/version` and `argocd version --server <SERVER> --grpc-web`.
+
+SSO runs in the background: run the login with `run_in_background`, then wait for the callback listener (`lsof -iTCP:8085 -sTCP:LISTEN`). When it listens, the output says "Opening system default browser for authentication". Tell the user to finish the login in the browser.
+
+DexCare servers are on the techops-hub VPN. Each customer can have its own server, for example `argo-cd.urmc-uat-use2-01.dexcare.engineering`. `spi-uat` is the SPI tenant only.
 
 Per-server settings like `grpc-web` can be persisted in `~/.config/argocd/config` so you don't need to pass flags every time. See [references/argocd-config.md](references/argocd-config.md) for config details.
 
@@ -137,7 +143,8 @@ argocd app actions run <APP_NAME> restart --kind Deployment --resource-name <NAM
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| `Unauthenticated` / `token expired` | Auth token expired | `argocd relogin` or `argocd login <SERVER> --grpc-web --sso` |
+| `Unauthenticated` / `token expired` | Auth token expired | `argocd relogin` or `argocd login <SERVER> --grpc-web --sso --skip-test-tls` |
+| `argocd login` hangs, then `gRPC connection not ready: context deadline exceeded` | TLS probe hangs before SSO starts | Add `--skip-test-tls` |
 | Perpetual diff on HPA | Metrics field ordering | Ensure HPA metrics order: memory first, cpu second (matches K8s API server return order) |
 | Diff shows only image tag changes | CI/CD auto-updated image | Verify revision and authorized rollout stage before syncing |
 

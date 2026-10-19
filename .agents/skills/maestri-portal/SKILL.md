@@ -69,6 +69,8 @@ viewport: 780x520  url: https://example.com  title: Example
 
 ### Navigation
 - `maestri portal navigate "Portal" "url"` — go to URL
+- `maestri portal back "Portal"` / `forward` — go back or forward in the portal's history
+- `maestri portal reload "Portal"` — reload the page (also retries one that failed to load)
 - `maestri portal info "Portal"` — get current URL, title, viewport size
 - `maestri portal screenshot "Portal"` — capture screenshot (returns temp file path)
 
@@ -84,6 +86,7 @@ viewport: 780x520  url: https://example.com  title: Example
 - `maestri portal focus "Portal" @e2` — focus element
 - `maestri portal select "Portal" @e5 "Option Text"` — select dropdown option
 - `maestri portal check "Portal" @e6` / `uncheck` — toggle checkbox
+- `maestri portal upload "Portal" @e4 ./report.pdf` — upload files (list several for a multi-file input) through the file input or the button that opens it. Don't `click` a file input to upload: that opens a Finder panel on the user's Mac that you can't fill.
 
 ### Scrolling
 - `maestri portal scroll "Portal" down 300` — scroll down 300px from viewport center (up/down/left/right)
@@ -113,6 +116,8 @@ Portals open at a desktop size (~1900px wide). Resize one to test responsive bre
 2. Use refs to interact: `click @e3`, `fill @e2 "value"`, `key "Enter"`
 3. `maestri portal snapshot "Portal"` again to verify result
 4. If refs are stale (page changed), run snapshot again to get fresh refs
+
+A portal command that fails (element not found, unknown verb, a JavaScript error in `evaluate`, a `wait` that times out) prints `maestri: error: <reason>` to stderr and exits nonzero, so scripts can stop on it.
 
 Use `screenshot` when you need to see the visual layout. Use `snapshot` when you need to understand interactive elements. Prefer `snapshot` + refs over `screenshot` + coordinates — refs are more accurate.
 

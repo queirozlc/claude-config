@@ -1,6 +1,6 @@
 ---
 name: ship
-description: "Run the Maestri ticket cycle. Use for /ship, ship TICKET, run the cycle, the next ticket, or /ship init. Supports isolated floors; merge requires explicit permission."
+description: "Run the Maestri ticket cycle. Use for /ship, ship TICKET, run the cycle, the next ticket, or /ship init. Also review mode for someone else's PR: /ship review, 'start a review cycle for TICKET', 'review PR N'. Supports isolated floors; merge and posting require explicit permission."
 ---
 
 # Ship — the universal development cycle
@@ -21,6 +21,8 @@ unless the user explicitly asks you to.
    repos where personal orchestration config cannot be committed;
    `<repo-name>` is the checkout's basename).
    If none exists, run the [Init flow](references/setup.md) before doing anything else.
+3. The ledger Stop hook in the checkout. Run `~/.agents/ship/link-local.sh --hook-only`
+   on every invocation (see [Cycle state ledger](references/state.md)).
 
 A `CLAUDE.md` next to the resolved config is part of the config. Read it
 right after `ship.md`; no harness loads it on its own. It holds the project
@@ -35,7 +37,7 @@ interview alias.
 
 ## Scope and selection
 
-Project-agnostic development cycle orchestrator for the Maestri canvas: read the project's ship config, fetch a ticket (Linear, GitHub issue, or Jira), gather codebase context, route to planner/design/executor teammates, fan reviews out by project surface (backend-only, web, mobile), gate with the project's CI command, then ship (commit, push, PR via gh, babysit, then merge only with the user's explicit permission). Keeps a per-ticket cycle state ledger so the cycle survives context clears. Use when the user says "ship TICKET-KEY" (e.g. "ship PRE-12", "ship #454", "ship SCH-603"), "run the cycle", "pick up the next ticket", or "/ship". The word "floor" anywhere in the request ("/ship HOB-66 floor", "ship HOB-66 on a new floor") runs the cycle on a fresh git-isolated Maestri floor. Also handles first-time project setup via "/ship init".
+Project-agnostic development cycle orchestrator for the Maestri canvas: read the project's ship config, fetch a ticket (Linear, GitHub issue, or Jira), gather codebase context, route to planner/design/executor teammates, fan reviews out by project surface (backend-only, web, mobile), gate with the project's CI command, then ship (commit, push, PR via gh, babysit, then merge only with the user's explicit permission). Keeps a per-ticket cycle state ledger so the cycle survives context clears. Use when the user says "ship TICKET-KEY" (e.g. "ship PRE-12", "ship #454", "ship SCH-603"), "run the cycle", "pick up the next ticket", or "/ship". Every ship runs on a fresh git-worktree Maestri floor unless the request says "ground" ("/ship HOB-66 ground"). Also handles first-time project setup via "/ship init".
 
 ## Workflow references
 
@@ -47,8 +49,9 @@ Read each reference when its condition applies. References are parts of this ski
 | --- | --- |
 | `/ship init`, or the project has no ship config | [Init flow](references/setup.md) |
 | Select, connect, or recruit seats | [Seat matrix by surface](references/team.md) |
-| The request contains the `floor` modifier | [Floor mode](references/floor.md) |
+| Every ship, unless the request says `ground` | [Floor mode](references/floor.md) |
 | Run or resume the normal ticket cycle | [The cycle](references/cycle.md) |
+| `/ship review`, "review cycle", "review PR N", or a ledger with `Cycle: review` | [Review mode](references/review.md) and [Review briefs](references/review-briefs.md). They replace the cycle and floor step 0 |
 | Before any work dispatch or seat reset | [Worker context hygiene and background dispatch](references/dispatch.md) |
 | Update state, resume work, or handle context overflow | [Cycle state ledger and handoffs](references/state.md) |
 

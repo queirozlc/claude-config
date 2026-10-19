@@ -5,7 +5,7 @@ Every hunt gets these required seats:
 | Seat             | Role               | When                                     |
 | ---------------- | ------------------ | ---------------------------------------- |
 | Resume Architect | `Resume Architect` | Every application. Writes, never grades. |
-| ATS Analyzer     | `ATS Analyzer`     | Every application. Grades, never edits.  |
+| ATS Analyzer     | `ATS Analyzer`     | Every application. Analyzes the posting before the build, never edits. |
 
 The Market Scout is a fallback seat. Recruit it only when the deterministic
 source runner cannot parse a LinkedIn layout.
@@ -40,9 +40,9 @@ authoritative; this is the default it starts from.
 
 | Seat             | Default harness                                                             | Why                                                                                              |
 | ---------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Maestro          | `claude --model fable --effort high`                                        | Coordination, triage, judgement. Has a real background mechanism.                                |
-| ATS Analyzer     | `claude --model fable --effort high`                                        | Routine delta review after deterministic gates. Use Opus only for unresolved semantic ambiguity. |
-| Resume Architect | per config                                                                  | Writing quality, mid weight                                                                      |
+| Maestro          | `claude --model opus --effort medium`                                       | Coordination, triage, judgement, long context. Has a real background mechanism.                  |
+| ATS Analyzer     | `claude --model sonnet --effort medium`                                     | Posting Analysis is classification against written rules. Opus only for unresolved ambiguity.    |
+| Resume Architect | `claude --model sonnet --effort medium`                                     | Executes the spec; the gate catches mechanical errors. Opus only if writing quality is weak.     |
 | Market Scout     | `codex -m gpt-5.6-luna -c model_reasoning_effort=high -c service_tier=fast` | Portal driving and verbatim capture                                                              |
 
 **The Maestro seat runs Claude Code.** Decision by Lucas, 2026-09-02, after a

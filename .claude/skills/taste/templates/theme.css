@@ -1,0 +1,161 @@
+/* taste: derived design system on Tailwind v4.
+   Fill the four placeholders in :root. Everything else is derived.
+   Import after `@import "tailwindcss";`. */
+
+:root {
+  /* 1. Brand hue and chroma from the brand color. */
+  --t-hue: 260;            /* brand H */
+  --t-brand-c: 0.16;       /* brand C */
+  --t-brand-l: 0.55;       /* brand L, keep 0.5 to 0.65 for fills */
+  --t-neutral-c: 0.006;    /* 0.004 cool brands, up to 0.012 warm brands */
+
+  /* Light surfaces and text, all on the brand hue. */
+  --t-canvas: oklch(0.99 var(--t-neutral-c) var(--t-hue));
+  --t-raised: oklch(0.975 var(--t-neutral-c) var(--t-hue));
+  --t-overlay: oklch(1 0 0);
+  --t-line: oklch(0.92 var(--t-neutral-c) var(--t-hue));
+  --t-line-strong: oklch(0.87 var(--t-neutral-c) var(--t-hue));
+  --t-text-primary: oklch(0.21 calc(var(--t-neutral-c) * 2) var(--t-hue));
+  --t-text-secondary: oklch(0.47 calc(var(--t-neutral-c) * 2) var(--t-hue));
+  --t-text-tertiary: oklch(0.62 calc(var(--t-neutral-c) * 2) var(--t-hue));
+
+  --t-brand: oklch(var(--t-brand-l) var(--t-brand-c) var(--t-hue));
+  --t-brand-hover: oklch(calc(var(--t-brand-l) - 0.05) var(--t-brand-c) var(--t-hue));
+  --t-brand-soft: oklch(0.95 0.03 var(--t-hue));
+  --t-on-brand: oklch(1 0 0);
+
+  --t-danger: oklch(0.55 0.16 25);
+  --t-danger-soft: oklch(0.95 0.04 25);
+  --t-success: oklch(0.55 0.13 150);
+  --t-success-soft: oklch(0.95 0.04 150);
+  --t-warning: oklch(0.6 0.14 80);
+  --t-warning-soft: oklch(0.95 0.05 80);
+
+  --t-shadow-overlay: 0 4px 16px -4px oklch(0 0 0 / 0.12), 0 0 0 1px oklch(0 0 0 / 0.04);
+  --t-shadow-modal: 0 16px 48px -12px oklch(0 0 0 / 0.24);
+
+  /* Durations. Tailwind has no --duration-* namespace; use duration-(--duration-fast). */
+  --duration-fast: 140ms;
+  --duration-normal: 220ms;
+  --duration-layer: 320ms;
+  --duration-page: 450ms;
+}
+
+[data-theme="dark"] {
+  --t-canvas: oklch(0.14 var(--t-neutral-c) var(--t-hue));
+  --t-raised: oklch(0.18 var(--t-neutral-c) var(--t-hue));
+  --t-overlay: oklch(0.22 var(--t-neutral-c) var(--t-hue));
+  --t-line: oklch(0.27 var(--t-neutral-c) var(--t-hue));
+  --t-line-strong: oklch(0.32 var(--t-neutral-c) var(--t-hue));
+  --t-text-primary: oklch(0.95 calc(var(--t-neutral-c) * 2) var(--t-hue));
+  --t-text-secondary: oklch(0.72 calc(var(--t-neutral-c) * 2) var(--t-hue));
+  --t-text-tertiary: oklch(0.55 calc(var(--t-neutral-c) * 2) var(--t-hue));
+  --t-brand-soft: oklch(0.25 0.04 var(--t-hue));
+  --t-danger-soft: oklch(0.25 0.05 25);
+  --t-success-soft: oklch(0.25 0.05 150);
+  --t-warning-soft: oklch(0.25 0.05 80);
+  --t-shadow-overlay: 0 0 0 1px oklch(1 0 0 / 0.06);
+  --t-shadow-modal: 0 16px 48px -12px oklch(0 0 0 / 0.6), 0 0 0 1px oklch(1 0 0 / 0.06);
+}
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Mapped to Tailwind namespaces. `inline` because the values are runtime variables. */
+@theme inline {
+  --color-canvas: var(--t-canvas);
+  --color-raised: var(--t-raised);
+  --color-overlay: var(--t-overlay);
+  --color-line: var(--t-line);
+  --color-line-strong: var(--t-line-strong);
+  --color-primary: var(--t-text-primary);
+  --color-secondary: var(--t-text-secondary);
+  --color-tertiary: var(--t-text-tertiary);
+  --color-brand: var(--t-brand);
+  --color-brand-hover: var(--t-brand-hover);
+  --color-brand-soft: var(--t-brand-soft);
+  --color-on-brand: var(--t-on-brand);
+  --color-danger: var(--t-danger);
+  --color-danger-soft: var(--t-danger-soft);
+  --color-success: var(--t-success);
+  --color-success-soft: var(--t-success-soft);
+  --color-warning: var(--t-warning);
+  --color-warning-soft: var(--t-warning-soft);
+  --shadow-overlay: var(--t-shadow-overlay);
+  --shadow-modal: var(--t-shadow-modal);
+}
+
+@theme {
+  /* 2. Font. One family with 400, 500, 600. */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* 3. Four text sizes. Body 16/24 makes the line unit 24 px = spacing 6. */
+  --text-display: 1.75rem;
+  --text-display--line-height: 2.25rem;   /* 36 = 1.5 lines */
+  --text-display--font-weight: 600;
+  --text-display--letter-spacing: -0.01em;
+  --text-title: 1.125rem;
+  --text-title--line-height: 1.5rem;      /* 24 = 1 line */
+  --text-title--font-weight: 600;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;       /* 24 = the unit */
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.25rem;   /* 20; two captions ~ 1.67 lines, acceptable in rows */
+
+  /* 4. Radius family. crisp: 0.25rem/0.5rem. soft: 0.5rem/0.75rem. round: 0.75rem/1.25rem. sharp: 0.125rem/0.25rem */
+  --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+
+  /* Motion vocabulary. */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --animate-shimmer: shimmer 1.5s linear infinite;
+  --animate-pulse-soft: pulse-soft 1.8s ease-in-out infinite alternate;
+
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+  @keyframes pulse-soft {
+    from { opacity: 0.6; }
+    to { opacity: 1; }
+  }
+}
+
+@layer base {
+  html { color-scheme: light; }
+  [data-theme="dark"] { color-scheme: dark; }
+  body {
+    background: var(--t-canvas);
+    color: var(--t-text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--t-brand);
+    outline-offset: 2px;
+  }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Baseline overlay for checking rhythm. Add class "debug-baseline" to body. */
+@layer utilities {
+  .debug-baseline {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      oklch(0.6 0.2 25 / 0.15) 0 1px,
+      transparent 1px 1.5rem
+    );
+  }
+}

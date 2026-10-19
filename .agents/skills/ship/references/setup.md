@@ -38,7 +38,22 @@ its workspace/team/project coordinates, ticket state names (in progress / in
 review / done, or Jira transition names), seat model preferences, executor
 constraint skills per surface, language rules for user-facing strings, and
 where to write the config (repo `.agents/ship.md`, or the home fallback
-`~/.agents/ship/<repo-name>.md` for employer repos).
+`~/.agents/ship/<repo-name>/ship.md` for employer repos), and whether the
+user has Maestro-level instructions for a sibling `CLAUDE.md` (project
+conventions, house rules, memory pointers that no harness auto-loads). Write
+`CLAUDE.md` only when there is content for it. When it exists, ask whether
+to link `<repo>/CLAUDE.local.md` to it, so every seat in the checkout loads
+it on its own.
+
+**Set up the checkout** after the config is written (mandatory):
+
+- Link agreed: `~/.agents/ship/link-local.sh`. It registers the ledger Stop
+  hook and links `CLAUDE.local.md` to the sibling `CLAUDE.md` (repo
+  `.agents/CLAUDE.md`, or `~/.agents/ship/<repo-name>/CLAUDE.md`).
+- Link declined, or no `CLAUDE.md`: `~/.agents/ship/link-local.sh --hook-only`.
+
+Both keep the files git-ignored through `.git/info/exclude` and never
+overwrite an existing `CLAUDE.local.md`. See `~/.agents/ship/README.md`.
 
 **Write the config** using this template:
 
@@ -71,6 +86,8 @@ where to write the config (repo `.agents/ship.md`, or the home fallback
 | Seat | Role / agent name in Maestri | When | Preferred agents | Reset cmd |
 | ---- | ---------------------------- | ---- | ---------------- | --------- |
 | ...  | ...                          | ...  | ...              | ...       |
+
+Reset cmd is the seat's restart: `maestri recruit "<Name>" --preset "<P>" --command '<seat command>' --replace "<Name>"`. Not `/clear`.
 
 ## Executor constraints
 

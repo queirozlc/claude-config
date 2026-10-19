@@ -1,0 +1,20 @@
+{
+  "name": "context-handoff",
+  "version": "0.1.0",
+  "description": "In a /ship cycle, writes a handoff (ledger and Maestri note) when the Maestro context reaches its ceiling, then optionally runs /clear.",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "ceilingPercent": {
+      "type": "number",
+      "title": "Handoff ceiling (%)",
+      "description": "Context percent at which the Maestro writes its handoff. The ship skill uses 35.",
+      "default": 35
+    },
+    "autoClear": {
+      "type": "boolean",
+      "title": "Run /clear after the handoff",
+      "description": "Off: the handoff is automatic and a toast asks you to run /clear. On: the plugin runs /clear itself, only after it saw the ledger change.",
+      "default": false
+    }
+  }
+}

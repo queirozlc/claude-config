@@ -1,0 +1,1 @@
+{ "name": "ship-feedback", "version": "0.1.0", "description": "In an open /ship cycle, /ship-feedback <text> saves a problem report with the cycle and ledger context to ~/.agents/ship/feedback. With no text it toggles a pane.", "types": "./types/index.d.ts" }

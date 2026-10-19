@@ -17,8 +17,8 @@ yourself and you never grade one yourself** unless the user explicitly asks.
   takes a `-b`, `-c` suffix. Inspect both `~/career/state/` and
   `~/career/state/archive/` before selecting the suffix, so an archived hunt
   cannot be overwritten or reused.
-- **Application.** The per-posting pipeline inside a hunt: intake, tailor,
-  review, package, deliver. Ledger `~/career/state/app-<company>-<role>.md`.
+- **Application.** The per-posting pipeline inside a hunt: intake, posting
+  analysis, go/no-go, build, verify, package, deliver. Ledger `~/career/state/app-<company>-<role>.md`.
 - Use `hunt` for the complete execution and `application` for one posting.
 
 This is `/ship` for job applications. The mapping:
@@ -41,7 +41,7 @@ This is `/ship` for job applications. The mapping:
    A hunt does not run solo. If the CLI or canvas is unavailable, report the
    missing dependency and ask the user to open a Maestro terminal in the right
    workspace. Preserve the ledgers and candidate evidence while blocked.
-2. `~/career/ATS-KNOWLEDGE.md`, `~/career/RUBRIC.md` and `~/career/CV-SPEC.md`.
+2. `~/career/ATS-KNOWLEDGE.v2.md`, `~/career/RUBRIC.md` and `~/career/CV-SPEC.md`.
    They are the ground truth for every seat. If they are missing, stop and say
    so; do not improvise a replacement.
 3. A config at `~/career/find-me-a-job.md`. If none exists, run the [Init flow](references/setup.md) before anything else.
@@ -51,7 +51,8 @@ This is `/ship` for job applications. The mapping:
 5. `~/career/CLAUDE.md` (mirrored as `AGENTS.md`). Its numbered sections are
    binding on every seat. Read it before the first dispatch.
 6. These Python scripts under `~/career/scripts/`: `linkedin_source.py`,
-   `cache_linkedin_identity.py`, `resume_gate.py`, and `worker_sentinel.py`.
+   `cache_linkedin_identity.py`, `resume_gate.py`, `worker_sentinel.py`, and
+   `dispatch_seat.py`.
    The source config `linkedin-source.example.json` and root
    `claim-allowlist.json` must also exist. Stop if one is missing.
 
@@ -65,20 +66,20 @@ Before any work, read [Two ledgers](references/state.md) and apply its resume ru
 
 Read each reference when its condition applies. References are parts of this skill. Project-relative commands and paths still use `~/career`, not the reference directory.
 
-| Condition | Read |
-| --- | --- |
-| `/find-me-a-job init`, `start`, or missing config | [Init flow](references/setup.md) |
-| Select, recruit, replace, or configure seats | [Seat matrix and harnesses](references/team.md) |
-| Set up or use a search or profile portal | [Portals](references/portals.md) |
-| A portal needs login or presents an auth wall | [Auth walls](references/auth.md) |
-| Before running source, identity, gate, or sentinel scripts | [Deterministic script registry](references/scripts.md) |
-| Before any work dispatch or seat reset | [Background dispatch and worker context hygiene](references/dispatch.md) |
-| Assemble, source, triage, or stream a hunt | [The hunt](references/hunt.md) |
-| Intake, tailor, or review an approved posting | [The application](references/application.md) |
-| Package, deliver, close an application, or finish the hunt | [Application delivery and hunt summary](references/delivery.md) |
-| Update state, resume work, or handle context overflow | [Two ledgers and handoffs](references/state.md) |
+| Condition                                                  | Read                                                                     |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `/find-me-a-job init`, `start`, or missing config          | [Init flow](references/setup.md)                                         |
+| Select, recruit, replace, or configure seats               | [Seat matrix and harnesses](references/team.md)                          |
+| Set up or use a search or profile portal                   | [Portals](references/portals.md)                                         |
+| A portal needs login or presents an auth wall              | [Auth walls](references/auth.md)                                         |
+| Before running source, identity, gate, or sentinel scripts | [Deterministic script registry](references/scripts.md)                   |
+| Before any work dispatch or seat reset                     | [Background dispatch and worker context hygiene](references/dispatch.md) |
+| Assemble, source, triage, or stream a hunt                 | [The hunt](references/hunt.md)                                           |
+| Intake, analyze, build, or verify an approved posting      | [The application](references/application.md)                             |
+| Package, deliver, close an application, or finish the hunt | [Application delivery and hunt summary](references/delivery.md)          |
+| Update state, resume work, or handle context overflow      | [Two ledgers and handoffs](references/state.md)                          |
 
-The application reference covers intake through review. Continue through packaging and delivery in the delivery reference. Every completed hunt requires the hunt summary there. Init continues into the hunt, as specified in its reference.
+The application reference covers intake through verification. Continue through packaging and delivery in the delivery reference. Every completed hunt requires the hunt summary there. Init continues into the hunt, as specified in its reference.
 
 ## Standing rules
 

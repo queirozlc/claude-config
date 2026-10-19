@@ -5,32 +5,62 @@ foreground makes the human interrupt your own wait. So **every dispatch that
 carries work runs through your harness's background mechanism** — single ask,
 `--batch` fan-out, fallback Scout run, tailor, review, fix round. No exceptions.
 
-| Harness                          | Background mechanism                                                                                                                                                                                                              |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Claude Code                      | Bash tool with `run_in_background: true`, then `Monitor` / `TaskOutput`                                                                                                                                                           |
-| Codex with unified exec sessions | Run `maestri ask "<seat>" "<prompt>" > ~/career/state/<slug>-<seat>.out 2>&1` through `exec_command` with a short yield and **no `&`**. Record the returned session ID, then poll that session with `write_stdin` until it exits. |
+**Every Sieve and Quill dispatch goes through `scripts/dispatch_seat.py`.**
+Never run a bare `maestri ask` for a task that has a sentinel, and never chain
+a later step after one. Observed 2026-10-06: the seats went idle, four of four
+`maestri ask` processes stayed blocked, no background task completed, and the
+Maestro got no notification for 12 minutes. The script starts the ask, waits
+for the sentinel, stops the ask, and exits. Its exit is your wake signal.
+
+```
+python3 scripts/dispatch_seat.py \
+  --seat "<seat>" \
+  --prompt-file state/<task>.prompt.md \
+  --out state/<task>.out \
+  --sentinel state/<task>.complete.json \
+  --task-id <task-id> [--timeout 1800]
+```
+
+| Exit | Meaning                                              | Next                                                                                                                                  |
+| ---- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `0`  | Sentinel verified, status `complete`                 | Read the artifacts. Continue the application.                                                                                         |
+| `1`  | Sentinel verified, status `blocked` or `failed`      | Read the seat's report. Decide.                                                                                                       |
+| `2`  | Invalid input, invalid sentinel, or sentinel existed | Fix the input. A fix round needs a new task ID and a new sentinel path.                                                               |
+| `3`  | The ask returned, the seat wrote no sentinel         | Read the `.out` file and `maestri check "<seat>"`.                                                                                    |
+| `4`  | Timeout                                              | `maestri check "<seat>"`. If the seat still works, run the script again without `--seat`, `--prompt-file`, and `--out`: it only waits. |
+
+| Harness                          | Background mechanism                                                                                                                                                                |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Code                      | Run the script with the Bash tool and `run_in_background: true`. The task notification arrives when the script exits. Do the next step in that turn.                                |
+| Codex with unified exec sessions | Run the script through `exec_command` with a short yield and **no `&`**. Record the returned session ID, then poll that session with `write_stdin` until it exits.                  |
 
 Rules:
 
-- Redirect the output to a file next to the ledger. The reply is diagnostic
-  transport evidence and must survive a context clear.
+- One script run is one background task. Put nothing after it in the same
+  command. The gate, the ledger line, and the next dispatch belong to the turn
+  that the notification starts.
+- Do not end a turn with a dispatch open unless its script runs as a tracked
+  background task. A turn that only says "waiting" with no tracked task is a
+  stopped hunt.
+- The script writes the seat's reply to `--out`, next to the ledger. The reply
+  is diagnostic transport evidence and must survive a context clear.
 - In Codex, set `yield_time_ms` to about 1000 so `exec_command` returns a live
-  session ID while `maestri ask` remains attached. Write that session ID to
+  session ID while the script remains attached. Write that session ID to
   the ledger immediately. Poll it with empty `write_stdin` calls every 20 to
   30 seconds. A user message can interrupt the active poll, but the exec
   session remains alive; resume the same session ID.
 - **Never append `&` inside the Codex exec command.** Observed 2026-09-04: the
   parent shell exited, the recorded process disappeared, the `.out` file
   stayed empty, and Kestrel continued remotely with no result channel.
-- Completion requires the exec session to exit, the task sentinel to verify,
-  and every artifact named in the sentinel to exist. The `.out` reply is
-  diagnostic transport evidence. It is not the completion signal.
+- Completion requires the task sentinel to verify and every artifact named in
+  the sentinel to exist. The script checks both. The exit of `maestri ask` is
+  not required, and the `.out` reply is not the completion signal.
 - Maestri can return only the visible terminal screen for a long reply. If the
   final report can exceed one screen, give the worker a separate
   `~/career/state/<slug>-<seat>.report.md` path in the original prompt. The
   worker writes the complete report there and returns only a short status and
-  that path. Completion then requires the exec session to exit, the task
-  sentinel to verify, and the complete `.report.md` artifact. Read the report
+  that path. Name the `.report.md` file as a sentinel artifact, so completion
+  covers it. Read the report
   artifact before making the next decision. Do not use `maestri ask`
   from the worker to report back; the project rules prohibit it.
 - Poll, do not re-send. On timeout or an empty file, `maestri check "<name>"`

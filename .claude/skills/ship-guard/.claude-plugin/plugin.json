@@ -1,0 +1,1 @@
+{ "name": "ship-guard", "version": "0.1.0", "description": "Shows when the ship skill is not loaded during an open /ship cycle and forces the model to load it.", "types": "./types/index.d.ts" }
