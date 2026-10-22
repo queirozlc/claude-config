@@ -1,0 +1,8 @@
+.DS_Store
+
+**/.claude/settings.local.json
+.codegraph
+.maestri/
+CLAUDE.local.md
+AGENTS.override.md
+.pi/

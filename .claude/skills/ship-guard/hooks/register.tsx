@@ -89,6 +89,8 @@ export const register: Register = on => {
     const { Box, Text } = $.ui.resolve(e)
     const keys = s.ledgers.map(l => l.key).join(', ')
     const loaded = await read($, isLoaded)
+    // The band has one tree: carry the plugins beneath (context-handoff's ctx line) inside it.
+    const below = await next(e)
     return (
       <Box flexDirection="column">
         {s.problems.map(p => (
@@ -101,6 +103,7 @@ export const register: Register = on => {
         ) : (
           <Text color="red">ship: NOT loaded, open cycle {keys}. Loading it now.</Text>
         )}
+        {below}
       </Box>
     )
   })

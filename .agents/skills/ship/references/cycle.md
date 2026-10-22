@@ -5,8 +5,7 @@
 Floor mode (the default, unless the request says `ground`) replaces this step. See [Floor mode](floor.md).
 
 `maestri list`. Fill the config's seat table: connect disconnected
-teammates, recruit missing ones. If the canvas is empty and the config names
-a partitura, ask the user to load it instead of recruiting from scratch.
+teammates, recruit missing ones.
 
 ### 1. Ticket intake
 

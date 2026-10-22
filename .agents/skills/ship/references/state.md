@@ -32,14 +32,14 @@ Seats: <seat → last task, clean|dirty>
 **The head is a contract that tools read.** `~/.agents/ship/ledger.py` is the
 one reader. The ledger Stop hook and the `ship-guard` and `context-handoff`
 mods all use it, so a head that breaks the contract makes the cycle invisible
-to them: no band, no context handoff, no stale-ledger check.
+to them: no ship-guard status band, no context handoff, no stale-ledger check.
 
 - **File.** `<ticket-key>.md`, directly in the state folder. Every key form is
   correct (`HOB-154`, `PB-A`, `537`). For a GitHub issue `#9` the file is
   `9.md`. Sibling files are `<ticket-key>-<name>`. Folders are permitted.
 - **Title and Phase.** The head has the line `# <ticket-key> — cycle state`
   and a `Phase:` line, both above `## Log`. A file with only one of them is
-  not a ledger, and the band shows that as a problem.
+  not a ledger, and the ship-guard status band shows that as a problem.
 - **Floor.** `Ground` for a ground cycle. For a floor cycle, the floor name,
   then ` · `, then the clone path: the path ends with the floor folder. The
   floor Maestro finds its ledger by that folder.

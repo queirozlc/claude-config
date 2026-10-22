@@ -28,6 +28,9 @@ Single ask, batch entry, fix round: run this first.
    `maestri check "<name>"` and confirm ctx is low (a fresh seat is 5% to 8%).
    Do not use `--raw "/clear\n"`. It goes in as keystrokes, returns at once,
    and nothing confirms it worked.
+   On a floor, `maestri list` must also show the seat in the floor's band.
+   If it is not there, run `maestri band add "<floor name>" "<seat>"`. If
+   that fails, ask the master to do it.
 4. Log the restart in the ledger and set the **Seats** field to `clean`.
 
 Every prompt stays self-contained (brief included), so a restart never loses
@@ -60,8 +63,9 @@ Your own budget:
   Use `/compact` only for a mid-task squeeze.
 - At 35%: stop. A ground Maestro updates the ledger and asks the user for
   `/clear`. A floor Maestro tells the master. The master restarts it when it
-  is idle: `maestri recruit ... --replace "<floor Maestro>"`, then re-sends
-  the handoff from the ledger.
+  is idle: `maestri recruit ... --replace "<floor Maestro>"`, checks that
+  `maestri list` still shows it in the floor's band (`maestri band add` if
+  not), then re-sends the handoff from the ledger.
 - Redirect every dispatch to a file. `maestri ask` prints the seat's whole
   screen, and that lands in your context if you do not redirect it. Read only
   the `## Summary` at the top of a report (seats write 15 lines or less
@@ -107,6 +111,11 @@ sends the ask and waits for the report file, which is the wake signal.
 - Each prompt also ends with the ask-back line
   (`maestri ask "<Maestro>" "<task-id> done: <report file>"`). It is the
   second signal. Never tell a seat to finish with no ask-back.
+- Each prompt also carries the ledger line: "Ledger: `<ledger path>`. You may
+  `maestri ask` another seat. Before you send it, append
+  `- HH:MM <you> → <seat>: <why>` to the ledger's `## Log`, and name the
+  exchange in your report." A floor band lets every seat reach every other
+  seat. This line keeps that traffic in the ledger.
 - Exit 2 is a timeout: the seat wrote no report. Do not re-send. Run
   `maestri check "<seat>"`, log it, and decide. Set `--timeout-min` to about
   2 times the expected work.

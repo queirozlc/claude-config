@@ -29,9 +29,7 @@ that ticket once the config is written — do not stop after init.
   agents/roles against the [seat matrix](team.md) for the detected surfaces.
   Recruit what is missing (`maestri recruit "Name" --preset "..." --role
 "..."`); connect existing-but-disconnected teammates instead of
-  re-recruiting. Record the exact role/agent names in the config. Ask the
-  user for the partitura name if one exists (partituras are UI-only and
-  invisible to the CLI).
+  re-recruiting. Record the exact role/agent names in the config.
 
 **Ask the user** (only what detection could not resolve): tracker choice and
 its workspace/team/project coordinates, ticket state names (in progress / in

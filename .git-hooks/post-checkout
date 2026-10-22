@@ -1,0 +1,14 @@
+#!/bin/sh
+# Auto-fetch origin/main on worktree/branch checkout.
+# $1=prev SHA  $2=new SHA  $3=1 if branch checkout, 0 if file checkout
+
+[ "$3" = "1" ] || exit 0
+git rev-parse --verify origin/main >/dev/null 2>&1 || exit 0
+
+branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+if [ "$branch" = "main" ]; then
+  git pull --ff-only origin main
+else
+  # Try to fast-forward local main; fails silently if main is checked out elsewhere.
+  git fetch origin main:main 2>/dev/null || git fetch origin main
+fi

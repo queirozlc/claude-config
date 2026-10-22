@@ -29,7 +29,7 @@
  *   ttl: "auto" | "5m" | "1h"   cache lifetime (default auto)
  *   warnSeconds: number         countdown threshold for the warning (default 60)
  *   compactAtTokens: number     prompt size that makes an expired cache suggest /compact (default 100000)
- *   band: boolean               row above the prompt (default true)
+ *   band: boolean               row above the prompt (default true; always off on a Maestri terminal, MAESTRI_TERMINAL_ID set)
  *   status: boolean             entry under the prompt (default false)
  *   toast: boolean              toasts near expiry: at warnSeconds, then 10, 3, 2 and 1 s (default true)
  */
@@ -79,6 +79,8 @@ let lastKey = ''
 let toastedFor = 0
 let toastLevel = Infinity
 let isPaneOpen = false
+// on a Maestri terminal the band is noise: /cache is the only surface there
+let onMaestri = false
 
 type Policy = { warnMs: number; compactAtTokens: number }
 
@@ -149,6 +151,7 @@ export const register: Register = (on, options) => {
       disableSonnet: await $.env.get('DISABLE_PROMPT_CACHING_SONNET').catch(none),
       disableOpus: await $.env.get('DISABLE_PROMPT_CACHING_OPUS').catch(none),
     }
+    onMaestri = !!(await $.env.get('MAESTRI_TERMINAL_ID').catch(none))
     pinned = options.ttl === '5m' || options.ttl === '1h'
     observed = undefined
     setting = await readSetting($)
@@ -282,7 +285,7 @@ export const register: Register = (on, options) => {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (!showBand || e.props.hasSurvey || isPaneOpen) return next(e)
+    if (!showBand || onMaestri || e.props.hasSurvey || isPaneOpen) return next(e)
     const { last, advice, left } = current(policy, Date.now())
     if (!last && advice.kind !== 'off') return next(e)
     const { Box, Text } = $.ui.resolve(e)

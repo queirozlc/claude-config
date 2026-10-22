@@ -56,7 +56,10 @@ answer, look again before you keep the finding.
    Static Code Reviewer, a Security Auditor, and a Web QA seat only when the
    PR touches the web surface or the bug shows in the UI. No Planner, no
    executor, no Design Planner
-4. Connect the floor Maestro to each seat. Create the ledger (shape below)
+4. `maestri band create "<floor name>" --floor "<floor name>" --without-me`,
+   then check with `maestri list` that every seat is in the band. Seats may
+   talk to each other when the ledger logs it (see [Floor mode](floor.md)).
+   Create the ledger (shape below)
 5. Fill the handoff template from [Review briefs](review-briefs.md) and
    dispatch it in the background
 

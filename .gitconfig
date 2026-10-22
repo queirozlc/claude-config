@@ -39,3 +39,5 @@ autoSetupRemote = true
 	path = ~/.gitconfig-dexcare
 [includeIf "gitdir:~/Development.noindex/Local/"]
 	path = ~/.gitconfig-local
+[alias]
+	wta = !~/.agents/ship/link-local.sh --add

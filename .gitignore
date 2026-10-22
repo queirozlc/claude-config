@@ -16,6 +16,8 @@
 !.claude/agents/**
 !.claude/hooks/
 !.claude/hooks/**
+!.claude/local-marketplace/
+!.claude/local-marketplace/**
 !.claude/output-styles/
 !.claude/output-styles/**
 !.claude/rules/
@@ -29,6 +31,7 @@
 .claude/skills/orca-linear
 .claude/skills/orca-team
 .claude/skills/orchestration
+.claude/skills/synced
 
 # ~/.agents
 !.agents/
@@ -44,12 +47,25 @@
 !.agents/ship/
 .agents/ship/*
 !.agents/ship/ledger-stop.py
+!.agents/ship/CLAUDE.md
+!.agents/ship/README.md
+!.agents/ship/dispatch.py
+!.agents/ship/ledger.py
+!.agents/ship/floor-status-stop.py
+!.agents/ship/thread-guard.py
+!.agents/ship/link-local.sh
+!.agents/ship/test-*.py
 !.agents/ship/state/
 .agents/ship/state/*
 !.agents/ship/state/.gitkeep
 !.agents/ship/state/_archive/
 .agents/ship/state/_archive/*
 !.agents/ship/state/_archive/.gitkeep
+
+# Git setup. ~/.config is its own local repo (GitHub routing lives there), so it stays out.
+!.gitignore_global
+!.git-hooks/
+!.git-hooks/**
 
 .DS_Store
 # Added by code-review-graph

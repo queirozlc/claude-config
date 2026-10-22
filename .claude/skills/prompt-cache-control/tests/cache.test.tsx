@@ -261,6 +261,22 @@ describe('the band', () => {
     await ui.unmount()
   })
 
+  test('on a Maestri terminal the band stays empty', async ($, on) => {
+    const calls: Calls = { status: [], logs: [] }
+    fakeEngine(on, { MAESTRI_TERMINAL_ID: 'term-1' }, calls)
+    // the mod passes the band to the engine untouched; the engine draws nothing
+    on('ui.render', ($, e) => {
+      const { Text } = $.ui.resolve(e)
+      return <Text>engine band</Text>
+    })
+    await $.session.start({ cwd: '/repo', surface: 'terminal', isInteractive: true } as never)
+    await step($)
+    const ui = await band($)
+    expect(await ui.find({ type: 'Text', text: /%/ })).toBeUndefined()
+    expect(await ui.find({ type: 'Text', text: /engine band/ })).toBeDefined()
+    await ui.unmount()
+  })
+
   test('DISABLE_PROMPT_CACHING says so instead of a countdown', async ($, on) => {
     const calls: Calls = { status: [], logs: [] }
     fakeEngine(on, { DISABLE_PROMPT_CACHING: '1' }, calls)

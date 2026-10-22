@@ -1,0 +1,5 @@
+{
+  "name": "search-tools",
+  "version": "0.1.0",
+  "description": "Grep and Glob tools backed by ripgrep. Structured search without shell quoting."
+}

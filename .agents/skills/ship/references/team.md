@@ -37,3 +37,8 @@ touches `assets/`. Recruit Ginny (frontend executor) and Dobby (Web QA)? y/n".
 Recruit what the user approves, nothing more. This is a real question to the
 user, not a rhetorical one; do not recruit and then report it.
 
+**On a floor, a seat joins the floor's band.** A seat recruited after the
+band exists gets `--floor "<floor name>" --band "<floor name>"`. It then
+joins everything the band is connected to. Seats may talk to each other when
+the ledger logs it (see [Floor mode](floor.md)).
+

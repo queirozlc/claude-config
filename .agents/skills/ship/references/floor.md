@@ -54,21 +54,37 @@ Replace step 0 with this:
    missing ones (see [Seat matrix by surface](team.md)), then recruit each approved
    seat with `--floor "<floor name>"`. Every recruit boots inside the clone,
    already on the branch.
-6. `maestri connect "<Floor Maestro>" "<seat>"` for every seat. Recruits are
-   wired to you, not to each other, so without this the floor Maestro cannot
-   `ask` its own team.
+6. `maestri band create "<floor name>" --floor "<floor name>" --without-me`.
+   Recruits are wired to you, not to each other. The band puts the floor
+   Maestro and every seat on that floor in one band, so the floor Maestro can
+   `ask` its own team, and the canvas shows the team as one node. You stay
+   outside the band and keep your own rope to each member. Check with
+   `maestri list` that every seat is in the band before the handoff.
 7. Create the ledger (head filled, first log line) before you hand over.
 8. `maestri ask "<Floor Maestro>" "<handoff>"`. The handoff carries: the ticket
    key, the floor name and clone path, the branch and its base, the seat roster
    by name, the ledger path, the ship config path, and these standing orders:
-   run the cycle from the clone, own the ledger, dispatch every seat in the
-   background, run the seat prep before every dispatch, tell `<master name>`
+   run the cycle from the clone, own the ledger, make every seat log
+   its seat-to-seat messages (see below), dispatch every seat in the background, run the seat prep before every dispatch, tell `<master name>`
    at 30% context so it can restart you, report to `<master name>` by name, ask the master to add or dismiss seats,
    and **never merge**. The handoff `ask` itself is a dispatch:
    fire it in the background too.
 
+**Seats may talk to each other, on the record.** In a band every member can
+reach every other member. A seat may `maestri ask` another seat directly, for
+a question or a finding. The ledger must show every such message:
+
+- The seat that sends the ask appends one line to the ledger's `## Log`
+  before it sends: `- HH:MM <from> → <to>: <why>`. Seats only append to the
+  Log. The head stays the floor Maestro's.
+- The seat names the exchange in its own report to the floor Maestro.
+- The floor Maestro still dispatches the work packages through `dispatch.py`,
+  triages the review findings, and has the final say on a fix.
+- The floor Maestro talks to the master. Seats do not.
+
 After the handoff you are a router. Answer the floor Maestro's requests, recruit
-what it asks for, relay the user's merge permission, and keep the ledgers'
+what it asks for with `--floor "<floor name>" --band "<floor name>"` so the new
+seat joins the band and gets its connections, relay the user's merge permission, and keep the ledgers'
 directory as your index of what is in flight. Do not re-derive a floor's
 context; ask its Maestro.
 

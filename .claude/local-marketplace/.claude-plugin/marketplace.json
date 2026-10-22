@@ -1,0 +1,14 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "local",
+  "description": "Lucas's local plugins.",
+  "owner": { "name": "Lucas Queiroz" },
+  "plugins": [
+    {
+      "name": "search-tools",
+      "description": "Grep and Glob tools backed by ripgrep, for builds that do not register them.",
+      "source": "./search-tools",
+      "category": "productivity"
+    }
+  ]
+}

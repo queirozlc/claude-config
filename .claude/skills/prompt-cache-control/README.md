@@ -63,7 +63,7 @@ Other switches read from the environment at session start:
   ttl: string               "auto" | "5m" | "1h" (default auto)
   warnSeconds: number       countdown threshold for the yellow state and the toast (default 60)
   compactAtTokens: number   prompt size that makes an expired cache suggest /compact (default 100000)
-  band: boolean             row above the prompt (default true)
+  band: boolean             row above the prompt (default true; always off on a Maestri terminal, where MAESTRI_TERMINAL_ID is set, /cache still works)
   status: boolean           entry under the prompt, "cache 98% · 3:41" (default false)
   toast: boolean            toasts at the threshold, 10, 3, 2 and 1 s (default true)
 ```
