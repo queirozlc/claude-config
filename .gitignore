@@ -46,6 +46,8 @@
 .agents/skills/orchestration
 !.agents/ship/
 .agents/ship/*
+!.agents/ship/.claude/
+!.agents/ship/.claude/**
 !.agents/ship/ledger-stop.py
 !.agents/ship/CLAUDE.md
 !.agents/ship/README.md

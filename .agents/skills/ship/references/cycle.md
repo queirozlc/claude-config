@@ -71,6 +71,20 @@ opinions forever.
 1. Pass the config's CI command from the repo root. Red gate means no
    commit. Out-of-scope failures get reported to the user, never committed
    around.
+   **Done means validated.** A green gate and a clean
+   review are not the end of the cycle. Before the commit request, the
+   executor runs every Test Plan case end to end on the local stack (real
+   API, real UI), and records visual evidence for each case: screenshot or
+   recorded request and response as an image, plus the UI before/after
+   when a screen changed. A spec run, a log or a `file:line` alone does not
+   count here. The commit request shows the evidence inline, case by case,
+   with pass or fail. A busy local stack is not a reason to skip: free it.
+   A case that truly cannot run gets a `waived: <reason>` proof row, and
+   the request names it. Never ask for commit while the ledger or a report
+   has a "not proven" item that can still run. The same holds under a
+   standing permission to commit. The full gate is Part 2 of
+   `~/.agents/ship/CLAUDE.md`. A company file names the environments, the
+   QA audience and the tracker field (`~/.agents/ship/<company>-shared/ticket-artifacts.md`).
 2. Use the directory-routed `~/.local/bin/gh`. Verify identity with
    `gh api user --jq .login` when authentication needs checking. Each company
    has its own `GH_CONFIG_DIR`; never change a shared active account. Follow

@@ -6,8 +6,10 @@ Files that the `/ship` cycle uses across every project. The cycle itself lives i
 
 | Path | What it is |
 |---|---|
-| `CLAUDE.md` | Shared house rules for every project. Every project file imports it (see "Shared layer") |
-| `<project>/CLAUDE.md` | House rules for one project. Required. It starts with the shared import. `AGENTS.md` next to it is a symlink to it |
+| `CLAUDE.md` | Shared house rules for every project. Every project file imports it (see "Shared layer"). Part 1: working on the code. Part 2: the ticket gate (trace vs evidence, proof file, `waived:`, fichário, revalidation). Company and project neutral |
+| `house/*.md` | House rules read on demand by condition: `maestro.md` (Maestros and Planners), `talking-to-lucas.md` (seats that talk to Lucas) |
+| `<company>-shared/*.md` | Rules true for every project of one company and false elsewhere: tracker fields and states, QA audience, review checks, PR review threads, personal constraints, writing style, glossary. `enerflo-shared/`, `dexcare-shared/`. Each project file of that company imports its `ticket-artifacts.md` on line 2 |
+| `<project>/CLAUDE.md` | House rules for one project. Required. It starts with the shared import(s). `AGENTS.md` next to it is a symlink to it. Project-only references (`evidence.md`) sit beside it and the file lists them in a "read on demand" table |
 | `<project>/ship.md` | Cycle config for one project: seats, gates, Jira and PR rules |
 | `state/<project>/` | Cycle state. One ledger per ticket (`EN-5382.md`) plus briefs, reports and screenshots with a suffix (`EN-5382-*.md`) |
 | `feedback/<project>.md` | Problem reports about the cycle itself, one `## <time> · <keys>` entry per report with the ledger context. The `ship-feedback` mod writes it (`/ship-feedback <text>`) |
@@ -15,8 +17,7 @@ Files that the `/ship` cycle uses across every project. The cycle itself lives i
 | `dispatch.py` | Runs a `maestri ask` dispatch and returns when the report files are written, because the ask does not always return. Exit 2 on a timeout. `test-dispatch.py` checks it |
 | `ledger-stop.py` | Stop hook that blocks a turn when a ledger is stale |
 | `floor-status-stop.py` | Stop hook that blocks a floor Maestro turn that did work with no `maestri floor status` post. Seats are exempt: one writer per floor. `test-floor-status-stop.py` checks it |
-| `thread-guard.py` | PreToolUse and UserPromptSubmit hook: one Maestri Chat thread per ticket. Denies a `maestri say` for a ticket when the user is in another thread and points to the `<key>-outbox.md`, then hands the outbox back when the user writes in the ticket's thread. `test-thread-guard.py` checks it |
-| `link-local.sh` | Sets up a checkout: `CLAUDE.local.md` link to the project house rules, plus the ledger and floor status Stop hooks and the thread guard |
+| `link-local.sh` | Sets up a checkout: `CLAUDE.local.md` link to the project house rules, plus the ledger and floor status Stop hooks |
 
 `<project>` is the folder that the checkout's `CLAUDE.local.md` link points into. With no link, it is the folder name of the repo's main checkout. For a Maestri floor made as a clone (`.maestri/floors/<ground folder>--<branch>`), it is the part before `--`. Examples: `enerflo-next`, `localpay-api`.
 
@@ -31,6 +32,7 @@ It prints JSON for the agent in that folder: `project`, `seat`, `floor`, `branch
 - A ledger is a `.md` file directly in `state/<project>/` whose head (the text above `## Log`) has a `# <key> — cycle state` title and a `Phase:` line. The file name is not checked, so `EN-5382.md`, `PB-B.md` and `9.md` are all ledgers. A file with only the title or only the Phase is a problem
 - A ledger is open until its Phase starts with `done`, `closed` or `merged` (a step number before it is permitted)
 - A ledger whose Phase starts with `paused` (for example `Phase: paused (6-gate)`) is not open. The ship-guard and context-handoff mods and the Stop hook ignore it. `ledger.py` lists its key in `paused`. To resume, put the Phase in the brackets back
+- A ledger in another project's folder with `Routed from: <project>` in its head is also one of `<project>`'s ledgers, marked `routed`: a cycle in another repo that `<project>`'s ground agent routes. Problems in other folders are not reported here
 - The ground agent owns every open ledger. An agent on a floor owns the ledger whose `Floor:` contains the floor folder or whose `Branch:` starts with the floor's branch. A seat (a role folder whose role name has no "maestro") owns none
 
 ## How seats load the house rules
@@ -100,8 +102,6 @@ Registration, per checkout, in the git-ignored `.claude/settings.local.json`. `l
 { "hooks": { "Stop": [ { "hooks": [ { "type": "command", "command": "python3 /Users/lucasqueiroz/.agents/ship/ledger-stop.py" } ] } ] } }
 ```
 
-Registered today in `enerflo-next` (main and the 3 Codex worktrees), `localpay-api` and `frontend-pb-a`.
-
 ## Ledger format
 
 ```
@@ -121,6 +121,8 @@ Next: ...
 
 ## Shared layer
 
+One rule, one place: a rule lives in the highest layer where it is true (house, then company, then project) and nowhere else. Lower layers point at it, they do not copy it. A rule that two projects of a company both carry moves up to `<company>-shared/`; a rule true at two companies moves up to the house. The checklist for every edit is `.claude/rules/config-edits.md`, linked from `~/.claude/rules/` so every session loads it.
+
 `CLAUDE.md` in this folder holds the rules that every project shares. Two limits:
 
 - A Claude Code `@` import of a file outside the project needs an approval, which is stored once per project path. Every new role folder, worktree and floor is a new path
@@ -137,7 +139,6 @@ Open `~/.agents/ship/CLAUDE.md` with your file tool and follow it. It holds the 
 How a project wires it in:
 
 1. The project `CLAUDE.md` starts with the two lines above. Project rules come after them and add to the shared rules. Do not copy shared sections into the project file. `AGENTS.md` is a symlink to `CLAUDE.md`, so Codex and Cursor see the line.
-2. Every seat command in the project's `ship.md` starts with `trust-cwd &&`. It sets `hasClaudeMdExternalIncludesApproved` for the seat's own directory, so Claude seats do not stop on the import prompt.
-3. The Maestro still copies Tools and Comments into every brief, for seats that skip the file.
+2. The Maestro still copies Part 1 of the shared file (Tools, Comments, Context budget, Reporting) into every brief, for seats that skip the file.
 
-The ground Maestro, launched by hand, shows the import prompt once per checkout unless `trust-cwd` runs there first.
+The import prompt needs no step in seat commands. The `claude` function in `~/.zshrc` sets `hasTrustDialogAccepted` and `hasClaudeMdExternalIncludesApproved` for the git root (or the current folder outside git) before every launch, for seats and the ground Maestro alike.

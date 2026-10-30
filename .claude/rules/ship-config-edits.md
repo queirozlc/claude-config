@@ -1,0 +1,1 @@
+/Users/lucasqueiroz/.agents/ship/.claude/rules/config-edits.md
