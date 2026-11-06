@@ -31,7 +31,7 @@ async function autoLoad($: any) {
   if (!found.ledgers.length || (await read($, isLoaded)) || (await read($, tried))) return
   await update($, tried, () => true)
   $.command
-    .run({ command: 'ship', args: 'resume the open cycle from its ledger. Before the first action, read the dispatch, floor, team and cycle references and load maestri-manager and maestri-workspace. If `maestri list` shows a note named "Handoff from ...", read it too.' })
+    .run({ command: 'ship', args: 'resume the open cycle from its ledger. Before the first action, read the files the resume card names and load maestri-manager and maestri-workspace. If `maestri list` shows a note named "Handoff from ...", read it too.' })
     .catch(() => $.ui.toast('ship-guard: could not run /ship. Type /ship.'))
 }
 
