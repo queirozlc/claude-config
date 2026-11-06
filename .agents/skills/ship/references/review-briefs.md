@@ -3,8 +3,8 @@
 Fill the `<placeholders>` and send the text as it is. Do not rewrite a
 template per review: the same words every time keep the reviews consistent.
 Write each filled brief to `<state dir>/<KEY>-<name>.prompt.md` and dispatch
-it with `dispatch.py` in the background. Every brief also gets the Tools,
-Comments and Context sections of the project's house rules, and the line
+it with `dispatch.py` in the background. Every brief also gets Part 1 of the
+shared house rules (`~/.agents/ship/CLAUDE.md`), the project's code rules, and the line
 "Do not post `maestri floor status`. Report to your Maestro." for seats.
 
 ### Handoff (master → floor Maestro)
@@ -32,7 +32,7 @@ You are <name>, floor Maestro for a PR REVIEW cycle: <KEY>, PR #<N> "<title>" by
 - Seat prep before every dispatch. Never re-send; on a timeout, `maestri check`
 - Seats may talk to each other. Every seat brief carries the line "Ledger: `<ledger path>`. You may `maestri ask` another seat. Before you send it, append `- HH:MM <you> → <seat>: <why>` to the ledger's `## Log`, and name the exchange in your report." You still triage every finding
 - Never commit, push, or post. Never run `clockify`
-- Tell <master> at 30% context. Ask <master> to add or dismiss seats
+- Tell <master> at 60% context. Ask <master> to add or dismiss seats
 - Report to <master> after R1, R3, R4 and when the comments file is final: `maestri ask "<master>" "<KEY> <phase> done: <file>"`
 
 ## First step

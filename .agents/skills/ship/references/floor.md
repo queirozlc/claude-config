@@ -32,6 +32,12 @@ split the work, and they are rules, not missing capabilities:
   [seat prep](dispatch.md)). It does not add or dismiss seats. It asks the
   master for that. The master restarts the floor Maestro.
 
+**Only the floor Maestro is a Maestro.** A recruit gets Maestro Mode from its
+`--preset`, also on `--replace`. Recruit and restart the floor Maestro with a
+preset that has Maestro on. Recruit and restart every other seat with the
+config's seat preset, which has Maestro off (`maestri preset show "<P>"`).
+Never omit `--preset` on a seat: the recruit then copies you, a Maestro.
+
 Replace step 0 with this:
 
 1. Pull the base branch on the ground floor.
@@ -50,9 +56,10 @@ Replace step 0 with this:
 4. Recruit the floor Maestro onto the floor, naming it from the config's floor
    Maestro pool and giving it the config's Maestro role. Omit `--dir`: the
    floor's own checkout is the point.
-5. Pick the seats from the ticket's surfaces, ask the user to confirm the
-   missing ones (see [Seat matrix by surface](team.md)), then recruit each approved
-   seat with `--floor "<floor name>"`. Every recruit boots inside the clone,
+5. Pick the seats from the ticket's surfaces (see [Seat matrix by surface](team.md)):
+   every seat the config marks "Always" plus the surface seats. Ask the user to
+   confirm the missing ones, unless the config gives standing permission; then
+   recruit each seat with `--floor "<floor name>"` and the seat preset, one at a time. Every recruit boots inside the clone,
    already on the branch.
 6. `maestri band create "<floor name>" --floor "<floor name>" --without-me`.
    Recruits are wired to you, not to each other. The band puts the floor
@@ -66,8 +73,9 @@ Replace step 0 with this:
    by name, the ledger path, the ship config path, and these standing orders:
    run the cycle from the clone, own the ledger, make every seat log
    its seat-to-seat messages (see below), dispatch every seat in the background, run the seat prep before every dispatch, tell `<master name>`
-   at 30% context so it can restart you, report to `<master name>` by name, ask the master to add or dismiss seats,
-   and **never merge**. The handoff `ask` itself is a dispatch:
+   at 60% context so it can restart you, report to `<master name>` by name, ask the master to add or dismiss seats,
+   have the executor run every Test Plan case with evidence before any commit request or commit (cycle step 6.1),
+   and **never merge**. The handoff never offers spec output or a log as a fallback for evidence. The handoff `ask` itself is a dispatch:
    fire it in the background too.
 
 **Seats may talk to each other, on the record.** In a band every member can
@@ -95,5 +103,7 @@ prints it. Running the gate on the ground checkout gates the wrong tree.
 The floor already carries the branch, so step 6 commits on it instead of
 creating one. Everything else in the cycle is unchanged: same brief, same review
 fan-out, same gate, same merge permission from the user. Landing the branch is a
-merge of the PR, as usual; the floor itself is deleted by the user in the UI.
+merge of the PR, as usual; the ground Maestro then deletes the floor and the
+ticket's notes as the house rules say (`~/.agents/ship/house/maestro.md`
+"Floors are git worktrees", closing a cycle).
 

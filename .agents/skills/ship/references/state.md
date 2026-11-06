@@ -14,12 +14,14 @@ Master: <ground Maestro's agent name, from `You:` in `maestri list`>
 Phase: <0-assemble | 1-intake | 2-context | 3-route | 4-execute | 5-review | 6-gate | 6-pr-open | 6-awaiting-merge-permission | done | paused (<phase before the pause>)>
 Floor: <floor name · clone path, or "Ground">
 Maestro: <floor Maestro's agent name, or "master">
+Routed from: <project of the master's checkout> (only when the cycle runs in another repo)
 Thread: <Maestri Chat thread color of this ticket, or none>
 Branch: <branch> (base: <base branch> @ <sha>)
-PR: <url, or none>
+PR: <url> (draft | ready for review), or none
 Ticket: <tracker state>
 Next: <one concrete sentence>
 Open: <one line per unresolved item, or "none">
+Reminders: <what to tell Lucas later and when, or "none">
 Seats: <seat → last task, clean|dirty>
 
 ## Log
@@ -46,13 +48,28 @@ to them: no ship-guard status band, no context handoff, no stale-ledger check.
 - **Branch.** The line starts with the exact branch name. It is the second
   way a floor Maestro finds its ledger, and how the Stop hook assigns a
   commit to a ticket.
+- **Reminders.** Every "tell Lucas later" (deploy to UAT before the Review
+  move, a waived case, a Required Check set, a `clockify day` check) goes in
+  this line the moment it appears. The conversation does not survive a
+  clear, the head does. The SessionStart card and the per-prompt hook show
+  the line; the Stop hook blocks a "tell Lucas" log line when the head has
+  no `Reminders:` field. Clear an item when it was told
 - **Who gets which ledger.** The ground Maestro gets every open ledger of the
   project: it runs the ground cycles and routes the floor cycles. A floor
   Maestro gets the ledger that names its floor folder or its branch. A seat
   gets none.
+- **Routed from.** A cycle that runs in another repo keeps its ledger in that repo's state
+  folder. When the master routes it from its own checkout, the head has `Routed from:
+  <project>`, the state folder name of the master's checkout. `ledger.py` then lists it with
+  that project's ledgers too, marked `routed`, so the hooks and mods see it from the master's
+  checkout. The master writes this line, like `Thread:`
 - **Review ledgers.** A review of someone else's PR uses the same file, head
   and Phase values, plus `Cycle: review of <author>'s PR (not ours)` above
   `Phase:`. See [Review mode](review.md).
+- **PR.** The url, then `(draft)` or `(ready for review)`. Update it on
+  `gh pr ready`. The floor-status Stop hook reads `ready` with a `6-pr-open`
+  or `6-awaiting-merge-permission` Phase and blocks while the sidebar says
+  `working` instead of `review`.
 - **Thread.** The Maestri Chat color that belongs to this ticket, one color
   per open ticket. See [Thread per ticket](#thread-per-ticket).
 - **Check it.** After you create a ledger or change its Floor, Branch or
@@ -92,16 +109,14 @@ thread.
   empty ones). A ticket that starts from the terminal gets `Thread: none`
   until the user picks one.
 - **Reply in it.** `maestri say` posts to the thread the user is in, and the
-  CLI cannot pick another one. Tag every `maestri say` with the ticket:
-  `SHIP_TICKET=<key> maestri say ...`, or `SHIP_TICKET=none` for a reply that
-  is about no ticket. The `thread-guard.py` hook denies a tagged reply when
-  the user is in another thread, and an untagged reply in a thread that a
-  ticket owns.
-- **Outbox.** When the guard denies a reply, append it to
-  `<key>-outbox.md` beside the ledger (`## HH:MM` then the text). The guard
-  gives the outbox back as context when the user next writes in the ticket's
-  thread. Send it first, then delete the file. In the other thread you may
-  send one line with no detail: "<key> update is waiting in <color>".
+  CLI cannot pick another one. The Maestri Chat header of the last message
+  names that thread. Send a ticket's reply only when it is the ticket's
+  `Thread:` color.
+- **Outbox.** When the user is in another thread, append the reply to
+  `<key>-outbox.md` beside the ledger (`## HH:MM` then the text). When the
+  user next writes in the ticket's thread, send the outbox first, then
+  delete the file. In the other thread you may send one line with no
+  detail: "<key> update is waiting in <color>".
 - **A blocking question** goes in the ticket's thread. Say that the work waits
   on it. Ask again in the same thread after 30 minutes with no answer.
 - **Close.** When the ledger reaches `done`, ask the user in the ticket's
@@ -140,7 +155,7 @@ stop. When the user says resume, put the Phase in the brackets back, append
 
 ## Context overflow and handoffs
 
-- **Your own overflow** (35%, see [budget](dispatch.md)): the ledger IS the
+- **Your own overflow** (65%, see [budget](dispatch.md)): the ledger IS the
   handoff. Update it, tell the user to `/clear`, resume via the resume rule.
   No Maestri note needed.
 - **Teammate overflow:** record its unfinished work in the ledger's

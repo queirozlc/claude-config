@@ -39,8 +39,9 @@ answer, look again before you keep the finding.
   after the user says so for that PR
 - Local edits only to try something out (a spec that proves a bug). Revert
   them before the report. `git status` at the end equals `git status` at the start
-- Dev database: an additive migration to run the PR is allowed. Take a dump
-  first when a migration deletes or rewrites rows. Never reset, drop, or seed.
+- Dev database: follow the config's Gate rules (enerflo-next `ship.md`: an
+  additive `migration:up` is allowed, reset, drop, seed and down are not).
+  Take a dump first when a migration deletes or rewrites rows.
   Log every migration applied so the user can roll it back
 - One serving floor at a time (see the config's Notes). Ask the master for the
   slot. When done, stop the servers and check the ports, because a child
@@ -105,7 +106,7 @@ Verdict, from what is left:
 
 | Left after triage | Verdict | GitHub event |
 | --- | --- | --- |
-| nothing | approve | `APPROVE`, short body |
+| nothing | approve | `APPROVE`, body is an informal LGTM, never a recap of the PR |
 | nits only | approve with nits | `APPROVE` with the comments |
 | a should fix or a blocker | request changes | `REQUEST_CHANGES` |
 
@@ -128,6 +129,10 @@ How a comment reads:
 
 - Point at the exact line range and say what is wrong and why it matters.
   1 to 3 sentences. A nit is one sentence
+- Every `file:line` in a comment or the review body is a GitHub permalink
+  at the reviewed head sha:
+  `[file.ts:12-20](https://github.com/<owner>/<repo>/blob/<sha>/<path>#L12-L20)`.
+  A bare `file:line` gives the author nothing to click
 - No suggestion blocks and no code. The author's agent writes the fix
 - No proof in text. Proof is visual only, a screenshot or a before/after
   composite, and only when it helps. Give its path above the block
@@ -137,6 +142,8 @@ How a comment reads:
 - The user's voice: first person singular, plain words, short sentences, no
   em dashes, sound like a teammate. Never mention agents, seats, tools, or
   review rounds. Never claim an impact nobody proved
+- Few periods: a comma or a line break when the thought continues. Never
+  tell the author what their own PR does, say only what they need to act on
 - Comments about the Test Plan or a missing follow-up ticket go in the review
   body, not on a line
 

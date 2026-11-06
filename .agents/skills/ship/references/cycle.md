@@ -10,17 +10,35 @@ teammates, recruit missing ones.
 ### 1. Ticket intake
 
 Fetch the issue with the config's tracker tooling. Move it to the config's
-**in progress** state before any code is written. Keep the state accurate
-for the whole cycle; a stale state is a bug. Create the cycle state ledger
+**in progress** state before any code is written, unless the config says a
+status move needs the user's OK: then ask for it in the intake report. Keep
+the state accurate for the whole cycle; a stale state is a bug. Create the cycle state ledger
 now (see [Cycle state ledger](state.md)), with `Thread:` set to the Maestri
 Chat color the ticket started in ([Thread per ticket](state.md#thread-per-ticket)).
 
-### 2. Context pass (you, the Maestro)
+### 2. Context gate (you, the Maestro)
 
-Use CodeGraph first when repository navigation needs it. Create or repair the index according to the global instructions. If CodeGraph cannot run or answer the question, use targeted reads and `rg`. Produce a short context brief: what the
-ticket asks, which files/symbols it touches, relevant constraints from the
-project's AGENTS.md/CLAUDE.md, and prior decisions (check ai-memory if the
-ticket references past work). This brief travels with every prompt you send.
+Work alone until you can explain the problem. Do not ask the user for
+context you can get yourself.
+
+1. Read the company sources file, `~/.agents/ship/<company>-shared/sources.md`
+   (setup writes it, see [Init flow](setup.md)). Use every source that fits
+   the ticket: the full ticket with comments, attachments, epic and links,
+   then chat threads, calls, logs, error trackers, real data and the real
+   screen. Read again on every blocker
+2. Explore the code with CodeGraph first. If CodeGraph cannot run or answer
+   the question, use targeted reads and `rg`
+3. Bug: reproduce it on base-branch code (local stack, or prod read-only)
+   and save the evidence. Other tickets: run the current behavior the
+   ticket changes. If you cannot reproduce, write what you tried
+4. Write `<KEY>-context.md` beside the ledger: what the ticket asks, the
+   root cause or the change point (`file:line`), the files and symbols it
+   touches, constraints from the project rules, prior decisions, one line
+   per source (what it showed, or why you skipped it), and open questions
+
+Exit only when the root cause or change point has a trace or evidence and
+every open question is one that only the user can answer. Then start the
+cycle. This file travels with every prompt you send.
 
 ### 3. Route
 

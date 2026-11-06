@@ -24,6 +24,10 @@ unless the user explicitly asks you to.
 3. The ledger Stop hook in the checkout. Run `~/.agents/ship/link-local.sh --hook-only`
    on every invocation (see [Cycle state ledger](references/state.md)).
 
+Read `~/.agents/ship/house/maestro.md` on every invocation, and
+`~/.agents/ship/house/talking-to-lucas.md` before the first reply to the
+user. They hold the Maestro and communication parts of the house rules.
+
 A `CLAUDE.md` next to the resolved config is part of the config. Read it
 right after `ship.md`; no harness loads it on its own. It holds the project
 instructions for the Maestro (conventions, house rules, memory pointers).
@@ -42,6 +46,8 @@ Project-agnostic development cycle orchestrator for the Maestri canvas: read the
 ## Workflow references
 
 Before any work, read [Cycle state ledger](references/state.md) and apply its resume rule. Resume the recorded next step instead of repeating completed phases.
+
+A resume is not a shortcut past the references. The SessionStart hook (`~/.agents/ship/session-start.py`, registered by `link-local.sh`) prints a resume card on every start, clear and compact: the open ledger heads, the hard rules and the references for the current phase. Read the files the card names before the first action, and load the `maestri-manager` and `maestri-workspace` skills. Without a card (no hook in this checkout), read [dispatch](references/dispatch.md), [floor](references/floor.md), [team](references/team.md) and [cycle](references/cycle.md). Every work message to a seat or Maestro goes through `dispatch.py`.
 
 Read each reference when its condition applies. References are parts of this skill. Project-relative commands still run from the selected checkout.
 

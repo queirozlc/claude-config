@@ -8,8 +8,12 @@ status line of a 1M window.
 
 | Who | Ceiling |
 | --- | ------- |
-| Executor, reviewer, QA, planner seats | 20% (200k) |
-| Maestro, ground or floor | 30% warn, 35% hard stop |
+| Executor, reviewer, QA, planner seats | 40% (400k) |
+| Maestro, ground or floor | 60% warn, 65% hard stop |
+
+A restart drops what the seat learned and costs a full reread of the ticket,
+the plan and the files, so restart only at a clean point: report in, fix
+pushed. Never mid step.
 
 ### Seat prep (before every dispatch)
 
@@ -51,17 +55,17 @@ Executor budget:
   you send it.
 - The executor brief must say: read with `codegraph_explore`, not Read loops;
   do not reread a file you just wrote; give wide read-only research to a
-  sub-agent; if ctx reaches 20% before you finish, stop at the next clean
+  sub-agent; if ctx reaches 40% before you finish, stop at the next clean
   point, write `<ticket-key>-progress-<seat>.md` (done, remaining, files
   touched) and report.
-- An executor that reports above 25% got a package that was too big. Log it
+- An executor that reports above 45% got a package that was too big. Log it
   and split the next one smaller.
 
 Your own budget:
 
-- At 30%: finish the step, write the ledger, and stop taking new detail.
+- At 60%: finish the step, write the ledger, and stop taking new detail.
   Use `/compact` only for a mid-task squeeze.
-- At 35%: stop. A ground Maestro updates the ledger and asks the user for
+- At 65%: stop. A ground Maestro updates the ledger and asks the user for
   `/clear`. A floor Maestro tells the master. The master restarts it when it
   is idle: `maestri recruit ... --replace "<floor Maestro>"`, checks that
   `maestri list` still shows it in the floor's band (`maestri band add` if
