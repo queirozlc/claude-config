@@ -86,6 +86,23 @@ for cwd, role, want in [(ground, "Backend Executor", []), (worktree, "Proj Maest
     os.makedirs(seat)
     json.dump({"name": role}, open(os.path.join(seat, "role.json"), "w"))
     assert keys(seat) == want and ledger.scan(seat)["seat"] is (not want), role
+# A cycle in another repo that this ground routes: `Routed from: proj` puts it in proj's ledgers.
+other = os.path.join(ledger.SHIP, "state", "skills")
+os.makedirs(other)
+open(os.path.join(other, "S-1.md"), "w").write(head("S-1").replace("Maestro: m", "Maestro: m\nRouted from: proj"))
+open(os.path.join(other, "S-2.md"), "w").write(head("S-2"))
+open(os.path.join(other, "S-3.md"), "w").write("Phase: 4-execute\n")
+assert keys(ground) == ["6", "9", "S-1"] and ledger.scan(ground)["ledgers"][2]["routed"] is True
+assert not any("S-3" in p for p in ledger.scan(ground)["problems"])                # other folders' problems stay there
+assert keys(worktree) == ["9"]                                                      # a floor does not route it
+assert [l["key"] for l in ledger.ledgers(other)[0]] == ["S-1", "S-2"]               # its own project still runs it
+skills = os.path.join(ws, "skills")
+os.makedirs(skills)
+sh("git", "init", "-q", "-b", "main", cwd=skills)
+assert [(l["key"], l["routed"]) for l in ledger.scan(skills)["ledgers"]] == [("S-1", False), ("S-2", False)]
+for name in os.listdir(other):
+    os.remove(os.path.join(other, name))
+os.rmdir(other)
 assert ledger.scan(tmp) == {"project": None, "seat": False, "floor": None, "branch": "", "ledgers": [], "paused": [], "problems": []}
 
 # ledger-stop.py blocks a turn that ran a cycle event after the last write of a number-key ledger.
@@ -98,6 +115,32 @@ hook = subprocess.run([sys.executable, os.path.join(HERE, "ledger-stop.py")], ca
                       env={**os.environ, "HOME": tmp})
 blocked = json.loads(hook.stdout)
 assert blocked["decision"] == "block" and "9.md" in blocked["reason"] and "6.md" not in blocked["reason"], hook.stdout
+
+
+def stop_hook(command, cwd):
+    event = {"timestamp": "2099-01-01T00:00:00Z", "message": {"content": [
+        {"type": "tool_use", "name": "Bash", "input": {"command": command}}]}}
+    open(transcript, "w").write(json.dumps(event) + "\n")
+    out = subprocess.run([sys.executable, os.path.join(HERE, "ledger-stop.py")], capture_output=True, text=True,
+                         input=json.dumps({"cwd": cwd, "transcript_path": transcript}), env={**os.environ, "HOME": tmp})
+    return json.loads(out.stdout) if out.stdout.strip() else None
+
+
+assert stop_hook('python3 ~/.agents/ship/dispatch.py --out x.out -- maestri ask "Jon 9" "$(cat p.md)"', worktree), "dispatch.py form"
+assert stop_hook("git -C /x push origin feat/9", worktree), "git -C push"
+assert stop_hook("cd /x && git push", worktree), "git push after &&"
+assert stop_hook('cat <<E\nmaestri ask "Jon 9" "x"\nE', worktree) is None, "heredoc text"
+assert stop_hook('maestri ask "Jon 9" "go"', os.path.join(ground, ".maestri", "roles", "0a1b")) is None, "a seat is never blocked"
+assert stop_hook('maestri ask "Jon 9" "go"', os.path.join(worktree, ".maestri", "roles", "0a1b")), "a floor Maestro in a role folder is"
+# Reminders: a head field. A "tell Lucas" log line with no Reminders field blocks the turn, once the field is there it passes.
+assert ledger.read(write("R-1.md", head("R-1").replace("Next: do x", "Next: do x\nReminders: UAT first")))[0]["reminders"] == "UAT first"
+remind = write("R-2.md", head("R-2") + "- 10:05 tell Lucas later about the waived case\n")
+out = stop_hook("ls", worktree)
+assert out and "Reminders" in out["reason"] and "R-2.md" in out["reason"], out
+write("R-2.md", head("R-2").replace("Next: do x", "Next: do x\nReminders: waived case") + "- 10:05 tell Lucas later about the waived case\n")
+assert stop_hook("ls", worktree) is None, "Reminders field present"
+os.remove(remind)
+
 # Thread: a color, or none.
 assert ledger.read(write("T-1.md", head("T-1").replace("Maestro: m", "Maestro: m\nThread: Pink")))[0]["thread"] == "pink"
 assert ledger.read(write("T-2.md", head("T-2").replace("Maestro: m", "Maestro: m\nThread: none")))[0]["thread"] == ""

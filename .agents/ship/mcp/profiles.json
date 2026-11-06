@@ -1,0 +1,46 @@
+{
+  "_doc": "MCP servers per seat type. `servers` is every server a seat may see. `keep` lists what a seat type needs; apply.py disables the rest for that seat's working directory in ~/.claude.json. `roles` maps a word in the Maestri role name to a seat type, first match wins. A checkout root (ground or floor) gets the maestro profile.",
+  "servers": [
+    "claude.ai Atlassian MCP",
+    "claude.ai Claude Code Remote",
+    "claude.ai Claude Docs",
+    "claude.ai Context7",
+    "claude.ai Datadog",
+    "claude.ai Figma",
+    "claude.ai Gmail",
+    "claude.ai Google Calendar",
+    "claude.ai Google Drive",
+    "claude.ai Granola",
+    "claude.ai Higgsfield",
+    "claude.ai Linear",
+    "claude.ai Mobbin",
+    "claude.ai Sentry",
+    "claude.ai Slack",
+    "claude.ai Wispr Flow",
+    "claude.ai Wonder",
+    "claude.ai Y.js MCP",
+    "codegraph",
+    "ai-memory",
+    "paper",
+    "playwright"
+  ],
+  "keep": {
+    "maestro": ["claude.ai Atlassian MCP", "claude.ai Slack", "claude.ai Context7", "claude.ai Datadog", "claude.ai Sentry", "claude.ai Granola", "codegraph", "ai-memory", "playwright"],
+    "planner": ["claude.ai Atlassian MCP", "claude.ai Slack", "claude.ai Context7", "claude.ai Granola", "codegraph", "ai-memory"],
+    "executor": ["codegraph", "playwright", "claude.ai Context7", "claude.ai Sentry"],
+    "reviewer": ["codegraph", "claude.ai Atlassian MCP", "claude.ai Context7"],
+    "auditor": ["codegraph", "claude.ai Context7"],
+    "qa": ["codegraph", "playwright"],
+    "design": ["codegraph", "claude.ai Figma", "claude.ai Mobbin"]
+  },
+  "roles": [
+    ["Design", "design"],
+    ["Maestro", "maestro"],
+    ["Planner", "planner"],
+    ["QA", "qa"],
+    ["Reviewer", "reviewer"],
+    ["Auditor", "auditor"],
+    ["Engineer", "executor"],
+    ["Executor", "executor"]
+  ]
+}

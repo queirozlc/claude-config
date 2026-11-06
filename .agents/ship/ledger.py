@@ -11,6 +11,9 @@ is listed in `paused`.
 Contract, as references/state.md of the ship skill states it: a ledger is a `.md` file directly in
 ~/.agents/ship/state/<project>/ whose head (the text above `## Log`) has a `# <key> — cycle state`
 title and a `Phase:` line. The file name is not checked, so every ticket key form works.
+
+A ledger in another project's folder whose head has `Routed from: <project>` also belongs to
+<project>: its ground Maestro routes a cycle that runs in another repo.
 """
 import json, os, re, subprocess, sys
 
@@ -44,13 +47,25 @@ def read(path):
         "open": not paused and not FINISHED.match(phase),
         "floor": field(head, "Floor"), "maestro": field(head, "Maestro"), "master": field(head, "Master"),
         "branch": (field(head, "Branch").split() or [""])[0], "next": field(head, r"Next(?: action)?"),
+        "pr": field(head, "PR"), "routedFrom": field(head, "Routed from"), "reminders": field(head, "Reminders"),
         "thread": (field(head, "Thread").lower().replace("none", "").split() or [""])[0],
         "mtimeMs": os.path.getmtime(path) * 1000,
     }, None
 
 
 def ledgers(state):
-    """Every ledger of a state folder, and the problems of the files that fail the contract."""
+    """Every ledger of a state folder plus the ledgers other projects route from it, and the problems
+    of this folder's files that fail the contract."""
+    found, problems = folder(state)
+    root, project = os.path.split(os.path.normpath(state))
+    for name in sorted(os.listdir(root)):
+        other = os.path.join(root, name)
+        if name != project and os.path.isdir(other):
+            found += [l for l in folder(other)[0] if l["routedFrom"] == project]
+    return found, problems
+
+
+def folder(state):
     found, problems = [], []
     for name in sorted(os.listdir(state)):
         path = os.path.join(state, name)
@@ -131,8 +146,8 @@ def scan(cwd):
     out["branch"] = git(cwd, "branch", "--show-current")
     own = mine(found, out["floor"], out["branch"])
     for l in own:
-        # On the ground, a ledger with a clone path in Floor is a floor cycle: the ground Maestro routes it.
-        l["routed"] = out["floor"] is None and "/" in l["floor"]
+        # On the ground, a floor cycle (a clone path in Floor) or another repo's cycle is routed, not run.
+        l["routed"] = out["floor"] is None and ("/" in l["floor"] or l["routedFrom"] == project)
     out["ledgers"] = [l for l in own if l["open"]]
     out["paused"] = [l["key"] for l in own if l["paused"]]
     return out

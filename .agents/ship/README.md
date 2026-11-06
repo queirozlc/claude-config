@@ -17,7 +17,10 @@ Files that the `/ship` cycle uses across every project. The cycle itself lives i
 | `dispatch.py` | Runs a `maestri ask` dispatch and returns when the report files are written, because the ask does not always return. Exit 2 on a timeout. `test-dispatch.py` checks it |
 | `ledger-stop.py` | Stop hook that blocks a turn when a ledger is stale |
 | `floor-status-stop.py` | Stop hook that blocks a floor Maestro turn that did work with no `maestri floor status` post. Seats are exempt: one writer per floor. `test-floor-status-stop.py` checks it |
-| `link-local.sh` | Sets up a checkout: `CLAUDE.local.md` link to the project house rules, plus the ledger and floor status Stop hooks |
+| `session-start.py` | SessionStart hook: the resume card for a Maestro (open ledger heads with `Reminders:`, hard rules, files for the phase) |
+| `prompt-reminders.py` | UserPromptSubmit hook: the `Reminders:` lines of the open ledgers, every prompt |
+| `mcp/apply.py` | Writes the per-seat MCP deny lists (`mcp/profiles.json`) into `~/.claude.json`, one per working directory |
+| `link-local.sh` | Sets up a checkout: `CLAUDE.local.md` link to the project house rules, the four hooks above, the MCP deny lists |
 
 `<project>` is the folder that the checkout's `CLAUDE.local.md` link points into. With no link, it is the folder name of the repo's main checkout. For a Maestri floor made as a clone (`.maestri/floors/<ground folder>--<branch>`), it is the part before `--`. Examples: `enerflo-next`, `localpay-api`.
 
@@ -49,7 +52,7 @@ Claude Code, Codex and Cursor all read `<repo>/CLAUDE.local.md`. Each checkout h
 
 ## link-local.sh
 
-Sets up a checkout for the cycle: the `CLAUDE.local.md` symlink and the ledger Stop hook. It works for any project.
+Sets up a checkout for the cycle: the `CLAUDE.local.md` symlink, the hooks (`ledger-stop.py` and `floor-status-stop.py` on Stop, `session-start.py` on SessionStart, `prompt-reminders.py` on UserPromptSubmit) and the per-seat MCP deny lists (`mcp/apply.py`). It works for any project.
 
 ```sh
 git wta ../my-wt -b EN-1234-thing                # git worktree add + link (global alias)
@@ -90,17 +93,23 @@ It blocks only when all of these are true:
 
 1. The session cwd is in a git repo, and `state/<project>/` exists. So a worktree or a clone with any folder name finds the right ledgers
 2. `ledger.py` finds an open ledger in that folder. Files like `EN-5382-context.md` do not count
-3. The transcript has a Bash call after the ledger's last write (mtime) that runs `maestri ask`, `git commit`, `git push` or `gh pr` at a command boundary (start, `&&`, `||`, `;`, `|`). A newline is not a boundary, so a heredoc that only mentions these words does not count
+3. The transcript has a Bash call after the ledger's last write (mtime) that runs `maestri ask`, `git [-C dir] commit`, `git [-C dir] push` or `gh pr` at a command boundary (start, `&&`, `||`, `;`, `|`, or ` -- ` as in `dispatch.py ... -- maestri ask`). A newline is not a boundary, so a heredoc that only mentions these words does not count. A seat (a role folder whose role is not a Maestro) is never blocked
 
 When it blocks, it lists the stale ledgers. The fix: append one `- HH:MM <what happened>` line to `## Log`, change the head only if a field changed, then stop. It blocks once per stop (`stop_hook_active`). Any error exits 0, so it never wedges a session.
 
 Every open ledger of the repo counts, not only the ticket you work on. For a ledger with no news, log `- HH:MM no change to this ticket, stop hook check during the <TICKET> cycle`. To stop the checks for a closed ticket, set `Phase: done`.
 
-Registration, per checkout, in the git-ignored `.claude/settings.local.json`. `link-local.sh` adds it:
+Registration, per checkout, in the git-ignored `.claude/settings.local.json`. `link-local.sh` adds both Stop hooks:
 
 ```json
-{ "hooks": { "Stop": [ { "hooks": [ { "type": "command", "command": "python3 /Users/lucasqueiroz/.agents/ship/ledger-stop.py" } ] } ] } }
+{ "hooks": { "Stop": [
+  { "hooks": [ { "type": "command", "command": "python3 /Users/lucasqueiroz/.agents/ship/ledger-stop.py" } ] },
+  { "hooks": [ { "type": "command", "command": "python3 /Users/lucasqueiroz/.agents/ship/floor-status-stop.py" } ] } ] } }
 ```
+
+## floor-status-stop.py
+
+A Stop hook for Maestri floors. On a floor it blocks a Maestro turn that did work (an edit, a sub-agent, a cycle event) and posted no `maestri floor status`. On the ground it blocks a turn that wrote an open floor ledger (an edit tool on the file, or a Bash redirect, `tee`, `sed -i`, `mv`, `cp` into it) and posted no `--floor "<name>"` status for it. A command that only reads the ledger never counts, even when another agent changed the file during the turn. The post is parsed with `shlex`, so flag order does not matter. A ledger with `Routed from:`, or a floor that `maestri floor status --floor` cannot reach from this workspace, is skipped. Seats are exempt.
 
 ## Ledger format
 

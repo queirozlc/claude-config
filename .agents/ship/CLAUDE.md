@@ -95,15 +95,16 @@ error rate go up.
 - Start every report file with `## Summary`, 15 lines or less: result,
   files touched, open items. Details go below it. Your Maestro reads the
   summary first
-- If your context reaches 20% before you finish, stop at the next clean
+- If your context reaches 40% before you finish, stop at the next clean
   point, write `<ticket-key>-progress-<seat>.md` (done, remaining, files
   touched) and report. The Maestro restarts you and sends the rest
 
 ## Reporting
 
-Only the ground Maestro, every floor Maestro, and the Planners talk to Lucas.
-Executors, reviewers, security auditors and QA seats report to their Maestro
-only, also when they are blocked. The project file names the seats.
+Only the ground Maestro talks to Lucas. A floor Maestro or a Planner talks
+to him only in a thread the master handed it. Executors, reviewers, security
+auditors and QA seats report to their Maestro only, also when they are
+blocked. The project file names the seats.
 
 # Part 2 — Every seat: the ticket gate
 

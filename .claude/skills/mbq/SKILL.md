@@ -28,7 +28,7 @@ Other formats: `--format json` (`{cols,rows,note}`, footer in `note`), `jsonl` a
 
 ## Read-only rule
 
-One SELECT or `WITH ... SELECT`, no `;`. Write words (insert, update, delete, drop, create, into, copy, lock, ...) and side-effect functions are rejected, also inside strings. Never try to work around the guard or send write SQL, not even to test it.
+One SELECT or `WITH ... SELECT`, no `;`. For query plans, prefix it with `EXPLAIN` or `EXPLAIN ANALYZE` (MySQL also `FORMAT=TREE`, Postgres also `(ANALYZE[, BUFFERS][, FORMAT TEXT|JSON])`); add `--max-cell 0` to see the full plan. `EXPLAIN ANALYZE` runs the query, so mind its cost on prod. Write words (insert, update, delete, drop, create, into, copy, lock, ...) and side-effect functions are rejected, also inside strings. Never try to work around the guard or send write SQL, not even to test it.
 
 ## Errors
 

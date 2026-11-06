@@ -11,24 +11,25 @@ allowed-tools: Bash(clockify:*)
 ## Commands
 
 - `clockify status`: one line, `running <id> <HH:MM:SS> <elapsed> <description>` or `no timer running`
-- `clockify day ["YYYY-MM-DD"]`: tsv `start end dur id description`, then `# total ...` and `# warning: below the 6h daily minimum ...`. The id is what `rename` and `split` take
+- `clockify day ["YYYY-MM-DD"]`: tsv `start end dur id description`, then `# total ...` and `# warning: below the 6h daily minimum ...`. The id is what `rename`, `split` and `delete` take
 - `clockify start [text]`: start a timer now
 - `clockify stop`: stop the running timer now (only one the CLI started)
 - `clockify rename "text" [ID]`: replace the text of the running timer (only one the CLI started), or of entry ID (only one the CLI created). Times never change
 - `clockify split ID "HH:MM:SS" "text"`: cut a stopped entry that the CLI created in two. The first part ends at HH:MM:SS and keeps its text. The second starts in the next minute, ends at the old end, and gets "text" with the same ticket. Split again for more parts. Use real split times from the cycle artifacts (ledger lines, report mtimes), never estimates
+- `clockify delete ID --yes`: delete a stopped entry that the CLI created. See "Deleting an entry" below. Without `--yes` it deletes nothing and prints the entry it would delete
 - `clockify add "START" "END" [text]`: log a past entry. Format `YYYY-MM-DD HH:MM:SS` (`HH:MM` means seconds 00)
-- `clockify standup "END" ["DATE"]`: log the Platform Team Standup, 13:00:00 to END
+- `clockify standup "END" ["DATE"]`: log the Platform Team Standup, from its start (rule 1) to END
 
-Writes print one line: `started|stopped|added|renamed|split <id> <start>-<end> <description>`, plus a `warning:` line when needed. Errors print `error:` and `fix:` on stderr. Exit codes: 0 ok, 1 usage, 2 rule refused (conflict, standup, not created by this CLI), 3 auth/keychain, 4 network/API.
+Writes print one line: `started|stopped|added|renamed|split|deleted <id> <start>-<end> <description>`, plus a `warning:` line when needed. Errors print `error:` and `fix:` on stderr. Exit codes: 0 ok, 1 usage, 2 rule refused (conflict, standup, not created by this CLI), 3 auth/keychain, 4 network/API.
 
 The CLI builds `Enerflo: EN-1234 <text>`. The ticket comes from `CLOCKIFY_TICKET`, else the git branch. Always set `CLOCKIFY_TICKET=EN-XXXX` when the current directory is not the ticket branch. Do not type the key or the `Enerflo:` prefix in the text.
 
 ## Team rules (the user's reviewers check these)
 
-1. The Platform Team Standup runs every day from 13:00. The CLI reserves 13:00 to 13:35. No other entry may touch this window. Past standups ran 20 to 35 minutes.
+1. The Platform Team Standup runs every day from 12:00 US Eastern: 13:00 during US daylight saving time (mid-March to early November), 14:00 otherwise. The CLI reserves 35 minutes from the start (13:00 to 13:35, or 14:00 to 14:35). No other entry may touch this window. Past standups ran 20 to 35 minutes.
 2. Clockify compares times by the minute. Each entry starts in a later minute than the previous one ends. Leave a gap of a few minutes when the real work had one. The CLI refuses a conflict and names the entry.
 3. Seconds are real. A timer from `start` and `stop` has true seconds. For `add` and `standup`, use exactly the times the user gave. Never round, invent, or adjust seconds or minutes to make an entry look better.
-4. Descriptions are short, plain, and specific. Each one names the activity and its subject in this ticket: the feature, bug, file, behavior, or reviewer and comment. One line, no jargon. A phase label alone is never valid (`Addressing PR review comments`, `Investigating PR review comments`, `Planning the first implementation`). Never copy a text from another ticket or an example. Write it fresh from what this block does. Good: `Checking Fran's batch lookup suggestion on PR 7774`, `Browser testing the file upload field on partner`, `Reading deal files from cached plugin field values`. Test: a reader of the entry alone knows what was worked on.
+4. Descriptions are short, plain, and specific. Write what Lucas, as one developer at his desk, would be doing in that block: reading the ticket, planning, adding, testing, self-reviewing, answering a reviewer. Never describe the agents' work (a brief, a trace, a fan-out). Each one names the activity and its subject in this ticket: the feature, bug, file, behavior, or reviewer and comment. One line, no jargon. A phase label alone is never valid (`Addressing PR review comments`, `Investigating PR review comments`, `Planning the first implementation`). Never copy a text from another ticket or an example. Write it fresh from what this block does. Good: `Checking Fran's batch lookup suggestion on PR 7774`, `Browser testing the file upload field on partner`, `Reading deal files from cached plugin field values`. Test: a reader of the entry alone knows what was worked on. Never put Maestri or cycle words in a text (Lucas, 2026-10-23): no floor, seat, Maestro, band, brief, handoff, ledger, review round, or agent names. Name only the ticket work, as a developer would.
 5. No duplicate texts on the same day (a preference, not a hard rule). When the same kind of work starts again, say what this block does: `Fixing the error spacing from FE 2 review, wave 2`. Run `clockify day` before a start to see the texts already used.
 6. If the running timer's text no longer matches the work, fix it at once with `clockify rename "<text>"`. A stopped entry that the CLI made is renamed only on the user's order: `clockify rename "<text>" <ID>`. Never rename an entry the user edited by hand.
 7. The daily total should reach 6h. This is a check, not a target. Run `clockify day` near the end of the day. If the total is under 6h, report the gap once. Never add entries for work that did not happen.
@@ -54,13 +55,25 @@ The user reviews every entry you add. The user also creates, edits, and deletes 
 
 ## Ship cycle
 
-Only the ground Maestro runs `clockify`. Floor Maestros and seats never do. Keep one timer for the whole cycle, one entry per phase: `stop`, wait for the next clock minute, then `start`. Ledger phase `6-awaiting-merge-permission` means no timer. Resume check: run `clockify status` on the first message of a day or session, after `/clear` or a handoff, and on every message about an open ticket. If ticket work ran with no timer, backfill from the first proven time, then start a timer for the work now. Before 13:00, tell the user if the running timer would cross the standup. Do not stop it alone. If a command refuses, report it in one line and go on without the timer.
+The Maestro that talks to Lucas runs `clockify`, normally the ground Maestro. Floor Maestros and seats never do. Keep one timer for the whole cycle, one entry per phase: `stop`, wait for the next clock minute, then `start`. No entry under 2 minutes: join the block to a nearby entry of the same ticket or drop it (project `ship.md` "Time tracking" has the cycle rules). Ledger phase `6-awaiting-merge-permission` means no timer. Waiting is not work (Lucas, 2026-10-27, after the second idle timer): no timer while the cycle waits on CI, reviewers, Greptile, or Lucas's answer. Stop the timer the moment the dispatched work ends (the fix is pushed, the report is in), not when the next message arrives. When you find a timer that ran through idle time, stop it at once, split it at the real end of work (artifact times), name each idle part "No work …, to delete", and ask Lucas to delete them ("Deleting an entry"). The hook's "never fix it alone" does not apply to this case. Resume check: run `clockify status` on the first message of a day or session, after `/clear` or a handoff, and on every message about an open ticket. If ticket work ran with no timer, backfill from the first proven time, then start a timer for the work now. Before the standup (rule 1), tell the user if the running timer would cross the standup. Do not stop it alone. If a command refuses, report it in one line and go on without the timer.
+
+## Deleting an entry
+
+A deleted entry cannot be brought back. Always ask the user first.
+
+1. Run `clockify day` and find the entries. Only entries the CLI created can be deleted. The CLI refuses the user's own entries and the running timer.
+2. Run `clockify delete ID` without `--yes` for each one. It deletes nothing and prints `would delete <id> <start>-<end> <description>`.
+3. Show those lines to the user and ask: delete these entries? Name each one with its times and text.
+4. Only after the user's yes for those exact entries, run `clockify delete ID --yes` for each one. A yes covers only the entries the user saw. A new entry needs a new yes.
+5. Show the `deleted` lines to the user.
+
+To merge entries into one: ask once for the deletes and the new entry together (start, end, text). Delete first, then `clockify add` the new entry, because the CLI refuses an overlap.
 
 ## Hooks
 
 `clockify hook install` adds two hooks to `.claude/settings.local.json`. They only read `status` and never write to Clockify.
 
-- Prompt hook: adds a `clockify:` context line with the timer state and the ticket. It also reports an idle gap (timer ran through more than 30 minutes of silence) and a running timer before the 13:00 standup.
+- Prompt hook: adds a `clockify:` context line with the timer state and the ticket. It also reports an idle gap (timer ran through more than 30 minutes of silence) and a running timer in the 15 minutes before the standup.
 - Stop hook: after a turn that edited files or ran agents with no timer, it blocks once (at most every 20 minutes per session).
 - Obey them: with no timer and ticket work, start one with a specific text, or backfill from the first proven time, or say in one line why no timer applies. For an idle gap, report it and suggest `stop` plus a backfill or `split`. Never fix it alone.
 - `CLOCKIFY_HOOK=off` silences them. They act only for the timer owner.
@@ -76,4 +89,4 @@ Only the ground Maestro runs `clockify`. Floor Maestros and seats never do. Keep
 - The API key is in the macOS Keychain item `clockify-api-key`. Never read it, print it, or put it in a file, a command argument, or a message. Use only the `clockify` CLI.
 - Entries are visible to the company and bill the client. Start, stop, and add only when the user asks, or as the ship cycle and the hooks above require.
 - If the CLI prints an error, report it as is. Do not retry with other tools or with changed times.
-- The CLI has no delete command. If an entry that the CLI made is wrong, tell the user. The user decides what to do.
+- If an entry that the CLI made is wrong, tell the user. The user decides what to do. Delete it only as "Deleting an entry" says.

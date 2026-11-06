@@ -54,7 +54,10 @@
 !.agents/ship/dispatch.py
 !.agents/ship/ledger.py
 !.agents/ship/floor-status-stop.py
-!.agents/ship/thread-guard.py
+!.agents/ship/session-start.py
+!.agents/ship/prompt-reminders.py
+!.agents/ship/mcp/
+!.agents/ship/mcp/**
 !.agents/ship/link-local.sh
 !.agents/ship/test-*.py
 !.agents/ship/state/

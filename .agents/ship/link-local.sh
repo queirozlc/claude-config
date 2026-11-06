@@ -1,6 +1,7 @@
 #!/bin/zsh
-# Sets up a checkout for the ship cycle: the ledger Stop hook, plus the
-# CLAUDE.local.md link to the project house rules.
+# Sets up a checkout for the ship cycle: the ledger Stop hook, the per-seat
+# MCP deny lists (mcp/apply.py), plus the CLAUDE.local.md link to the
+# project house rules.
 #   link-local.sh [dir]               hook + link one checkout (default: current dir)
 #   link-local.sh --hook-only [dir]   hook only, no CLAUDE.local.md
 #   link-local.sh --add <args>        git worktree add <args>, then hook + link the new worktree
@@ -34,6 +35,7 @@ link() {
     return 0
   fi
   add_stop_hook "$top"
+  python3 "$SHIP/mcp/apply.py" "$top"
 
   $HOOK_ONLY && return 0
   [[ -f "$rules" ]] || { echo "skip link $top: no ship rules at $target"; return 0; }
@@ -55,33 +57,28 @@ ignore() {
   echo "ignored $2 in .git/info/exclude"
 }
 
+# Stop: ledger and floor status checks. SessionStart: the resume card.
+# UserPromptSubmit: the Reminders lines of the open ledgers.
 add_stop_hook() {
-  local settings="$1/.claude/settings.local.json" script hook
+  local settings="$1/.claude/settings.local.json"
   mkdir -p "$1/.claude"
   [[ -s "$settings" ]] || echo '{}' > "$settings"
-  for script in ledger-stop.py floor-status-stop.py; do
-    hook="python3 $SHIP/$script"
-    if jq -e --arg c "$hook" '[.hooks.Stop[]?.hooks[]?.command] | index($c)' "$settings" >/dev/null; then
-      echo "skip $settings: $script already there"
-    else
-      jq --arg c "$hook" '.hooks.Stop += [{hooks: [{type: "command", command: $c}]}]' "$settings" > "$settings.tmp"
-      mv "$settings.tmp" "$settings"
-      echo "added $script Stop hook to $settings"
-    fi
-  done
-  hook="python3 $SHIP/thread-guard.py"
-  for event in PreToolUse UserPromptSubmit; do
-    if jq -e --arg c "$hook" --arg e "$event" '[.hooks[$e][]?.hooks[]?.command] | index($c)' "$settings" >/dev/null; then
-      echo "skip $settings: thread-guard.py $event already there"
-    else
-      jq --arg c "$hook" --arg e "$event" \
-        '.hooks[$e] += [if $e == "PreToolUse" then {matcher: "Bash"} else {} end + {hooks: [{type: "command", command: $c}]}]' \
-        "$settings" > "$settings.tmp"
-      mv "$settings.tmp" "$settings"
-      echo "added thread-guard.py $event hook to $settings"
-    fi
-  done
+  add_hook "$settings" Stop ledger-stop.py
+  add_hook "$settings" Stop floor-status-stop.py
+  add_hook "$settings" SessionStart session-start.py
+  add_hook "$settings" UserPromptSubmit prompt-reminders.py
   ignore "$1" .claude/settings.local.json
+}
+
+add_hook() {
+  local settings=$1 event=$2 script=$3 hook="python3 $SHIP/$3"
+  if jq -e --arg e "$event" --arg c "$hook" '[.hooks[$e][]?.hooks[]?.command] | index($c)' "$settings" >/dev/null; then
+    echo "skip $settings: $script already there"
+  else
+    jq --arg e "$event" --arg c "$hook" '.hooks[$e] += [{hooks: [{type: "command", command: $c}]}]' "$settings" > "$settings.tmp"
+    mv "$settings.tmp" "$settings"
+    echo "added $script $event hook to $settings"
+  fi
 }
 
 if [[ "${1:-}" == "--hook-only" ]]; then

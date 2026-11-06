@@ -11,10 +11,11 @@ session.
 import json, os, re, subprocess, sys
 from datetime import datetime, timezone
 
-# A trigger counts only at a shell command boundary. Newline is deliberately not
-# a boundary: a heredoc body that merely mentions `maestri ask` (editing the ship
-# skill, say) is text, not a cycle event.
-TRIGGER = re.compile(r"(?:^|&&|\|\||;|\|)\s*(?:maestri ask|git commit|git push|gh pr)\b")
+# A trigger counts only at a shell command boundary. ` -- ` is one, so
+# `dispatch.py ... -- maestri ask` counts. Newline is deliberately not a boundary:
+# a heredoc body that merely mentions `maestri ask` (editing the ship skill, say)
+# is text, not a cycle event.
+TRIGGER = re.compile(r"(?:^|&&|\|\||;|\||\s--\s)\s*(?:maestri ask|git(?:\s+-C\s+\S+)?\s+(?:commit|push)|gh pr)\b")
 
 
 def main():
@@ -23,6 +24,8 @@ def main():
     if ev.get("stop_hook_active"):          # already blocked once, do not loop
         return
     cwd = ev.get("cwd") or os.getcwd()
+    if ledger.is_seat(cwd):                 # a seat owns no ledger; its ask-back names the key
+        return
     project = ledger.ship_project(cwd)
     if not project:
         return
@@ -42,15 +45,37 @@ def main():
         if worked_since(ev.get("transcript_path"), os.path.getmtime(path), belongs):
             stale.append((f"{key}.md", path, phase))
 
-    if not stale:
+    if stale:
+        lines = "\n".join(f"- {name} (Phase: {phase}) → {path}"
+                          for name, path, phase in stale)
+        print(json.dumps({"decision": "block", "reason": (
+            "Ship ledger is stale. You ran a cycle event after its last write.\n"
+            f"{lines}\n"
+            "Append one `- HH:MM <what happened>` line to the ## Log, update the "
+            "head only if a field changed, then stop. Do not rewrite the log.")}))
         return
-    lines = "\n".join(f"- {name} (Phase: {phase}) → {path}"
-                      for name, path, phase in stale)
-    print(json.dumps({"decision": "block", "reason": (
-        "Ship ledger is stale. You ran a cycle event after its last write.\n"
-        f"{lines}\n"
-        "Append one `- HH:MM <what happened>` line to the ## Log, update the "
-        "head only if a field changed, then stop. Do not rewrite the log.")}))
+
+    lost = [path for key, path, *_ in ledgers if reminder_without_field(path)]
+    if lost:
+        print(json.dumps({"decision": "block", "reason": (
+            "A ledger log says to tell or remind Lucas later, but its head has no "
+            "`Reminders:` line. Only the head survives a context clear.\n"
+            + "\n".join(f"- {p}" for p in lost) + "\n"
+            "Add `Reminders: <what to tell him, when>` to the head (or `Reminders: none` "
+            "when nothing is pending), then stop.")}))
+
+
+REMIND = re.compile(r"\b(?:tell|remind|ask|ping)\s+Lucas\b", re.I)
+
+
+def reminder_without_field(path):
+    """True when the log has a 'tell Lucas' line and the head has no Reminders field."""
+    with open(path, errors="ignore") as f:
+        text = f.read()
+    head, _, log = text.partition("\n## Log")
+    if re.search(r"^-?[ \t]*Reminders:", head, re.M):
+        return False
+    return any(REMIND.search(line) for line in log.splitlines() if line.startswith("- "))
 
 
 def mentions(command, key):

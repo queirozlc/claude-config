@@ -29,7 +29,7 @@ test('handoff prompt names the note and the clear mode', () => {
 
 test('a routed ledger gets a log line only, its floor Maestro owns the head', () => {
   expect(handoffPrompt(true, [ledger])).not.toContain('do not change its head')
-  expect(handoffPrompt(true, [{ ...ledger, routed: true }])).toContain('/s/9.md (a floor cycle that you route: append one log line, do not change its head)')
+  expect(handoffPrompt(true, [{ ...ledger, routed: true }])).toContain('/s/9.md (a cycle that another Maestro runs and you route: append one log line, do not change its head)')
 })
 
 test('on a floor the handoff prompt reports to the Master of the ledger head', () => {

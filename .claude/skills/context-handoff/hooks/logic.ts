@@ -26,8 +26,8 @@ function lastStep(autoClear: boolean, ledgers: OpenLedger[], floor: boolean): st
   return `Tell the master in the background: \`maestri ask ${to} "Context handoff written for ${keys}. Restart me and send the handoff again."\` Do not run /clear.`
 }
 
-// The head of a routed ledger belongs to its floor Maestro: two writers on one head lose changes.
-const ROUTED = ' (a floor cycle that you route: append one log line, do not change its head)'
+// The head of a routed ledger belongs to the Maestro that runs it: two writers on one head lose changes.
+const ROUTED = ' (a cycle that another Maestro runs and you route: append one log line, do not change its head)'
 
 export function handoffPrompt(autoClear: boolean, ledgers: OpenLedger[], floor = false): string {
   const files = ledgers.map(l => `- ${l.path}${l.routed ? ROUTED : ''}`).join('\n')

@@ -3,18 +3,52 @@
 
 Blocks only when this terminal runs on a floor (not the ground level) in
 Maestri, it is not a seat (a recruit whose role is not a Maestro), `maestri floor status` answers for it, and the transcript shows work in the current turn (an edit, a write, a
-sub-agent, or a cycle event) with no `maestri floor status "<text>"` post. The
+sub-agent, a cycle event or a deploy) with no `maestri floor status "<text>"` post. The
 reason carries the current status, so a turn with no news re-posts the same
 line. Silent everywhere else. Any failure exits 0: a hook must never wedge a
 session.
-"""
-import json, os, re, subprocess, sys
 
-BOUNDARY = r"(?:^|&&|\|\||;|\|)\s*"
-# Same cycle events as ledger-stop.py, so a heredoc that merely mentions them is text.
-TRIGGER = re.compile(BOUNDARY + r"(?:maestri ask|git commit|git push|gh pr)\b")
-POST = re.compile(BOUNDARY + r"maestri floor status\s+[\"']")
+On the ground level, the ground Maestro does floor work too (deploy, live test).
+There it blocks when the turn wrote the ledger of a floor cycle and did not post
+`maestri floor status --floor "<floor>" "<text>"` for that floor.
+"""
+import json, os, re, shlex, subprocess, sys
+from datetime import datetime
+
+# A command boundary. ` -- ` covers `dispatch.py ... -- maestri ask`. Newline is not a
+# boundary: a heredoc body that merely mentions a cycle event is text.
+BOUNDARY = r"(?:^|&&|\|\||;|\||\s--\s)\s*"
+# Same cycle events as ledger-stop.py.
+TRIGGER = re.compile(BOUNDARY + r"(?:maestri ask|git(?:\s+-C\s+\S+)?\s+(?:commit|push)|gh pr|(?:pnpm |npx )?cdk deploy)\b")
+STATUS = re.compile(r"(?:\S*/)?(?:maestri|\$\{?MAESTRI_CLI\}?|\"\$\{?MAESTRI_CLI\}?\")\s+floor\s+status\b")
 WORK_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit", "Task", "Agent"}
+EDIT_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
+
+
+def status_posts(command):
+    """Every `maestri floor status` call in the command that carries a text: its --floor
+    value, or None for the terminal's own floor. Flag order does not matter."""
+    for segment in re.split(r"&&|\|\||;|\|", command):
+        segment = segment.strip()
+        if not STATUS.match(segment):
+            continue
+        try:
+            args = shlex.split(segment)[3:]
+        except ValueError:
+            continue
+        floor, text, i = None, False, 0
+        while i < len(args):
+            arg = args[i]
+            if arg == "--floor" and i + 1 < len(args):
+                floor, i = args[i + 1], i + 2
+            elif arg in ("--state", "--progress") and i + 1 < len(args):
+                i += 2
+            elif arg.startswith("--"):
+                i += 1
+            else:
+                text, i = True, i + 1
+        if text:
+            yield floor
 
 
 def main():
@@ -29,10 +63,19 @@ def main():
     if ledger.is_seat(cwd):
         return
     current = floor_status()
-    if current is None or not on_floor(cwd, current):
+    if current is None:
         return
-    work, posted = this_turn(ev.get("transcript_path"))
-    if not work or posted:
+    turn = this_turn(ev.get("transcript_path"))
+    if not on_floor(cwd, current):
+        return ground_check(cwd, turn)
+    stale = [l for l in ledger.scan(cwd)["ledgers"] if wrong_state(l, current)]
+    if stale:
+        print(json.dumps({"decision": "block", "reason": (
+            f"{stale[0]['key']}: the PR is ready for review, but the sidebar says working:\n  {current}\n"
+            'Post it again with the review state: `maestri floor status "<your agent name>: <where the work stands now>" '
+            "--state review`. Review is how Lucas learns the PR waits on reviewers. Then stop.")}))
+        return
+    if not turn["work"] or turn["posted"]:
         return
     # The CLI prints `"<floor>": [<state>] <text>  ·  by <agent>`; a new floor says "has no status yet".
     line = re.match(r'^"[^"]*":\s*\[(\w+)(?:\s+(\d+%))?\]\s*(.*?)(?:\s+·\s+by\s.*)?$', current)
@@ -51,6 +94,61 @@ def main():
         f"(add `--progress 2/5` when the task has countable steps).{again} "
         "Posting again keeps the sidebar current. You are the only writer on this floor: "
         "seats report to you, and you set blocked, review and done. Then stop.")}))
+
+
+def ground_check(cwd, turn):
+    """Block when this turn wrote an open floor ledger and posted nothing for that floor."""
+    import ledger
+    project = ledger.ship_project(cwd)
+    state = os.path.join(ledger.SHIP, "state", project or "")
+    if not project or not os.path.isdir(state):
+        return
+    found, _ = ledger.ledgers(state)
+    written = {l["floor"].split(" · ")[0]: l for l in found
+               if l["open"] and " · " in l["floor"] and l["mtimeMs"] >= turn["start"]
+               and not l.get("routedFrom") and wrote(l["key"], turn["calls"])}
+    # A floor of another workspace: `maestri floor status --floor` cannot reach it from here.
+    written = {f: l for f, l in written.items() if floor_status(f) is not None}
+    shown = lambda s: re.sub(r'^"[^"]*":\s*|\s+·\s+by\s.*$', "", s or "(no status)")
+    stale = [f for f, l in written.items() if f in turn["floors"] and wrong_state(l, floor_status(f))]
+    if stale:
+        lines = "\n".join(f"  {f}: {shown(floor_status(f))}" for f in stale)
+        print(json.dumps({"decision": "block", "reason": (
+            f"The PR of these floors is ready for review, but the sidebar says working:\n{lines}\n"
+            'Post again with `maestri floor status --floor "<floor>" "<your agent name>: <where the work stands now>" '
+            "--state review`. Then stop.")}))
+        return
+    missing = [f for f in written if f not in turn["floors"]]
+    if not missing:
+        return
+    lines = "\n".join(f"  {f}: {shown(floor_status(f))}" for f in missing)
+    print(json.dumps({"decision": "block", "reason": (
+        "Floor status not posted this turn. You wrote the ledger of a floor cycle, and its sidebar shows:\n"
+        f"{lines}\n"
+        'Run `maestri floor status --floor "<floor>" "<your agent name>: <where the work stands now>"` '
+        "for each floor, with `--state review|blocked|done` when that is the state. Then stop.")}))
+
+
+def wrong_state(l, status):
+    """A PR out of draft (`PR: <url> (ready for review)`) belongs in review, not working."""
+    state = re.match(r'^"[^"]*":\s*\[(\w+)', status or "")
+    ready = re.search(r"\bready\b", l.get("pr", ""), re.I) and not re.search(r"\bdraft\b", l.get("pr", ""), re.I)
+    return bool(ready and l["phase"] in ("6-pr-open", "6-awaiting-merge-permission")
+                and state and state.group(1) == "working")
+
+
+def wrote(key, calls):
+    """The turn wrote the ledger file: an edit tool on it, or a Bash command that redirects
+    or copies into it. A command that only reads it (cat, grep, sed -n, tail) does not count,
+    even when another agent changed the file during the turn."""
+    name = rf"(?<![\w-]){re.escape(key)}\.md\b"
+    writer = re.compile(r"(?:>>?|\btee\b|\bsed\s+-i\S*|\bperl\s+-p?i\S*|\bmv\b|\bcp\b)[^|;&\n]*" + name)
+    for tool, text in calls:
+        if tool in EDIT_TOOLS and re.search(name, text):
+            return True
+        if tool == "Bash" and writer.search(text):
+            return True
+    return False
 
 
 def on_floor(cwd, own):
@@ -73,11 +171,20 @@ def floor_status(floor=None):
     return out.stdout.strip() if out.returncode == 0 else None
 
 
+def new_turn(timestamp=""):
+    try:
+        start = datetime.fromisoformat(timestamp.replace("Z", "+00:00")).timestamp() * 1000
+    except Exception:
+        start = 0
+    return {"work": 0, "posted": 0, "floors": set(), "calls": [], "start": start}
+
+
 def this_turn(transcript):
-    """(work, posted): counts since the last real user prompt of the transcript."""
-    work = posted = 0
+    """What the turn did since the last real user prompt of the transcript: work and posts
+    (counts), floors posted with --floor, (tool, command or file path) calls, start time (ms)."""
+    turn = new_turn()
     if not transcript or not os.path.isfile(transcript):
-        return work, posted
+        return turn
     for line in open(transcript, errors="ignore"):
         try:
             ev = json.loads(line)
@@ -89,17 +196,23 @@ def this_turn(transcript):
         blocks = content if isinstance(content, list) else []
         is_result = any(isinstance(b, dict) and b.get("type") == "tool_result" for b in blocks)
         if ev.get("type") == "user" and not is_result and not ev.get("isMeta"):
-            work = posted = 0
+            turn = new_turn(ev.get("timestamp", ""))
             continue
         for b in blocks:
             if not isinstance(b, dict) or b.get("type") != "tool_use":
                 continue
-            command = (b.get("input") or {}).get("command", "") if b.get("name") == "Bash" else ""
-            if POST.search(command):
-                posted += 1
-            elif b.get("name") in WORK_TOOLS or TRIGGER.search(command):
-                work += 1
-    return work, posted
+            given = b.get("input") or {}
+            command = given.get("command", "") if b.get("name") == "Bash" else ""
+            turn["calls"].append((b.get("name"), command or str(given.get("file_path", ""))))
+            posts = list(status_posts(command))
+            for floor in posts:
+                if floor is None:
+                    turn["posted"] += 1
+                else:
+                    turn["floors"].add(floor)
+            if not posts and (b.get("name") in WORK_TOOLS or TRIGGER.search(command)):
+                turn["work"] += 1
+    return turn
 
 
 try:

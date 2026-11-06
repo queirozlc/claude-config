@@ -1,5 +1,6 @@
 {
   "env": {
+    "PLAYWRIGHT_MCP_HEADLESS": "true",
     "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
     "CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION": "false",
     "CLAUDE_CODE_NEW_INIT": "1",
@@ -20,12 +21,9 @@
     "allow": [
       "mcp__codegraph__*"
     ],
-    "deny": [
-      "Agent(Explore)"
-    ],
     "defaultMode": "bypassPermissions"
   },
-  "model": "opus",
+  "model": "fable",
   "hooks": {
     "PostToolUse": [
       {
@@ -54,6 +52,10 @@
           {
             "type": "command",
             "command": "/usr/bin/python3 ~/.claude/hooks/bash-file-guard.py"
+          },
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 ~/.claude/hooks/orbstack-gui-guard.py"
           }
         ]
       },
@@ -90,14 +92,6 @@
       }
     ],
     "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "codegraph prompt-hook"
-          }
-        ]
-      },
       {
         "matcher": "",
         "hooks": [
@@ -154,11 +148,10 @@
     "figma@claude-plugins-official": false,
     "frontend-design@claude-plugins-official": false,
     "paper-desktop@paper": false,
-    "ponytail@ponytail": true,
-    "cloudflare@cloudflare": true,
+    "ponytail@ponytail": false,
     "typescript-lsp@claude-plugins-official": true,
     "cc-plugin-you-should-know@builtin": false,
-    "search-tools@local": true
+    "impeccable@impeccable": true
   },
   "extraKnownMarketplaces": {
     "paper": {
@@ -173,16 +166,10 @@
         "repo": "DietrichGebert/ponytail"
       }
     },
-    "cloudflare": {
+    "impeccable": {
       "source": {
         "source": "github",
-        "repo": "cloudflare/skills"
-      }
-    },
-    "local": {
-      "source": {
-        "source": "directory",
-        "path": "/Users/lucasqueiroz/.claude/local-marketplace"
+        "repo": "pbakaus/impeccable"
       }
     }
   },
@@ -199,7 +186,7 @@
       "effortLevel": "medium"
     },
     "claude-opus-5-5": {
-      "effortLevel": "medium"
+      "effortLevel": "high"
     },
     "claude-sonnet-5-5": {
       "effortLevel": "medium"
@@ -214,7 +201,7 @@
   "pluginConfigs": {
     "context-handoff@skills-dir": {
       "options": {
-        "ceilingPercent": 30,
+        "ceilingPercent": 60,
         "autoClear": true
       }
     },
@@ -224,6 +211,12 @@
         "band": false,
         "status": false,
         "toast": true
+      }
+    },
+    "ponytail@ponytail": {
+      "options": {
+        "ledger": false,
+        "sendNames": true
       }
     }
   },
